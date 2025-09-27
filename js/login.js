@@ -147,7 +147,7 @@ async function handleLogin(e) {
     submitButton.disabled = true;
     
     try {
-        // Sign in with Supabase
+        // Step 1: لاگین کاربر
         const { data, error } = await supabase.auth.signInWithPassword({
             email: email,
             password: password
@@ -155,61 +155,82 @@ async function handleLogin(e) {
         
         if (error) throw error;
         
-        // Get user profile from our database
-        const { data: profile, error: profileError } = await supabase
+        // Step 2: بررسی تأیید ایمیل (اگر نیاز باشد)
+        if (data.user && !data.user.email_confirmed_at) {
+            showMessage(messageEl, 
+                'Please verify your email address. ' +
+                '<a href="#" id="resend-verification" style="color: #d4af37; text-decoration: underline;">Resend verification email</a>', 
+                'error'
+            );
+            
+            setTimeout(() => {
+                const resendLink = document.getElementById('resend-verification');
+                if (resendLink) {
+                    resendLink.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        resendVerificationEmail(email);
+                    });
+                }
+            }, 100);
+            
+            return;
+        }
+        
+        // Step 3: اطمینان از وجود پروفایل
+        const { data: profileData, error: profileError } = await supabase.rpc('create_user_profile', {
+            p_user_id: data.user.id,
+            p_user_email: data.user.email
+        });
+        
+        if (profileError) throw profileError;
+        
+        // Step 4: آپدیت زمان آخرین لاگین
+        await supabase.rpc('update_last_login', { p_user_id: data.user.id });
+        
+        // Step 5: گرفتن اطلاعات کامل پروفایل
+        const { data: profile, error: getProfileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', data.user.id)
             .single();
             
-        if (profileError && profileError.code !== 'PGRST116') {
-            throw profileError;
-        }
+        if (getProfileError) throw getProfileError;
         
-        // If user doesn't have a profile yet, create one
-        if (!profile) {
-            const { error: insertError } = await supabase
-                .from('profiles')
-                .insert([
-                    { 
-                        id: data.user.id, 
-                        email: data.user.email,
-                        level: 'gold', // Default level for new users
-                        balance: 0,
-                        is_active: true
-                    }
-                ]);
-                
-            if (insertError) throw insertError;
-        }
-        
-        // Store user data in localStorage
+        // Step 6: ذخیره اطلاعات کاربر
         localStorage.setItem('goldcrypto-user', JSON.stringify({
             id: data.user.id,
             email: data.user.email,
-            level: profile?.level || 'gold',
-            balance: profile?.balance || 0,
-            is_active: profile?.is_active !== false
+            full_name: profile.full_name,
+            level: profile.level,
+            balance: profile.balance || 0,
+            is_active: profile.is_active !== false
         }));
         
-        // Show success message
+        // Step 7: انتقال به صفحه کاربر
         showMessage(messageEl, 'Login successful! Redirecting...', 'success');
         
-        // Redirect to user dashboard
         setTimeout(() => {
             window.location.href = 'user.html';
         }, 1500);
         
     } catch (error) {
         console.error('Login error:', error);
-        showMessage(messageEl, error.message, 'error');
+        
+        let errorMessage = error.message;
+        
+        if (error.message.includes('Invalid login credentials')) {
+            errorMessage = 'ایمیل یا رمز عبور اشتباه است.';
+        } else if (error.message.includes('Email not confirmed')) {
+            errorMessage = 'لطفاً ابتدا ایمیل خود را تأیید کنید.';
+        }
+        
+        showMessage(messageEl, errorMessage, 'error');
     } finally {
         // Reset button
         submitButton.textContent = originalText;
         submitButton.disabled = false;
     }
 }
-
 async function handleSignup(e) {
     e.preventDefault();
     
@@ -226,6 +247,11 @@ async function handleSignup(e) {
         return;
     }
     
+    if (password.length < 6) {
+        showMessage(messageEl, 'Password must be at least 6 characters', 'error');
+        return;
+    }
+    
     // Show loading state
     const submitButton = form.querySelector('button[type="submit"]');
     const originalText = submitButton.textContent;
@@ -233,56 +259,95 @@ async function handleSignup(e) {
     submitButton.disabled = true;
     
     try {
-        // Sign up with Supabase
-        const { data, error } = await supabase.auth.signUp({
+        // Step 1: ثبت‌نام کاربر در سیستم احراز هویت
+        const { data: authData, error: authError } = await supabase.auth.signUp({
             email: email,
             password: password,
             options: {
                 data: {
                     full_name: name
-                }
+                },
+                emailRedirectTo: `${window.location.origin}/login.html`
             }
         });
         
-        if (error) throw error;
+        if (authError) throw authError;
         
-        // Create user profile in our database
-        const { error: profileError } = await supabase
-            .from('profiles')
-            .insert([
-                { 
-                    id: data.user.id, 
-                    email: data.user.email,
+        if (authData.user) {
+            // Step 2: ایجاد پروفایل کاربر با استفاده از تابع
+            const { data: functionData, error: functionError } = await supabase.rpc('create_user_profile', {
+                p_user_id: authData.user.id,
+                p_user_email: authData.user.email,
+                p_full_name: name
+            });
+            
+            if (functionError) throw functionError;
+            
+            // بررسی نتیجه تابع
+            if (functionData && functionData.status === 'error') {
+                throw new Error(functionData.message);
+            }
+            
+            // Step 3: بر اساس وضعیت ایمیل تأیید عمل کن
+            if (authData.session) {
+                // ایمیل تأیید نیاز نیست - کاربر لاگین شده
+                showMessage(messageEl, 'Account created successfully! Redirecting...', 'success');
+                
+                // ذخیره اطلاعات کاربر
+                localStorage.setItem('goldcrypto-user', JSON.stringify({
+                    id: authData.user.id,
+                    email: authData.user.email,
                     full_name: name,
-                    level: 'gold', // Default level for new users
+                    level: 'gold',
                     balance: 0,
                     is_active: true
-                }
-            ]);
-            
-        if (profileError) throw profileError;
-        
-        // Show success message
-        showMessage(messageEl, 'Account created successfully! Please check your email for verification.', 'success');
-        
-        // Clear form
-        form.reset();
-        
-        // Switch to login tab after a delay
-        setTimeout(() => {
-            document.querySelector('[data-tab="login"]').click();
-        }, 3000);
+                }));
+                
+                // انتقال به صفحه کاربر
+                setTimeout(() => {
+                    window.location.href = 'user.html';
+                }, 2000);
+                
+            } else {
+                // ایمیل تأیید نیاز است
+                showMessage(messageEl, 
+                    'Account created successfully! Please check your email for verification link.', 
+                    'success'
+                );
+                
+                // پاک کردن فرم
+                form.reset();
+                
+                // انتقال به تب لاگین بعد از 5 ثانیه
+                setTimeout(() => {
+                    document.querySelector('[data-tab="login"]').click();
+                }, 5000);
+            }
+        }
         
     } catch (error) {
         console.error('Signup error:', error);
-        showMessage(messageEl, error.message, 'error');
+        
+        // نمایش خطای فارسی برای کاربر
+        let errorMessage = error.message;
+        
+        if (error.message.includes('duplicate key') || error.message.includes('already exists')) {
+            errorMessage = 'این ایمیل قبلاً ثبت شده است.';
+        } else if (error.message.includes('password')) {
+            errorMessage = 'رمز عبور باید حداقل ۶ کاراکتر باشد.';
+        } else if (error.message.includes('email')) {
+            errorMessage = 'ایمیل معتبر نیست.';
+        } else if (error.message.includes('row-level security policy')) {
+            errorMessage = 'خطای سیستم. لطفاً دوباره تلاش کنید.';
+        }
+        
+        showMessage(messageEl, errorMessage, 'error');
     } finally {
         // Reset button
         submitButton.textContent = originalText;
         submitButton.disabled = false;
     }
 }
-
 async function handleAdminLogin(e) {
     e.preventDefault();
     
@@ -391,5 +456,31 @@ function checkAuthStatus() {
         } else {
             window.location.href = 'user.html';
         }
+    }
+
+}
+// تابع برای ارسال مجدد ایمیل تأیید
+async function resendVerificationEmail(email) {
+    try {
+        const { error } = await supabase.auth.resend({
+            type: 'signup',
+            email: email,
+            options: {
+                emailRedirectTo: `${window.location.origin}/login.html`
+            }
+        });
+        
+        if (error) throw error;
+        
+        showMessage(document.getElementById('login-message'), 
+            'Verification email sent! Please check your inbox.', 
+            'success'
+        );
+    } catch (error) {
+        console.error('Error resending verification:', error);
+        showMessage(document.getElementById('login-message'), 
+            'Error sending verification email: ' + error.message, 
+            'error'
+        );
     }
 }
