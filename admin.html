@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - GoldCrypto</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://vbkwlrrmylztakuhubqs.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZia3dscnJteWx6dGFrdWh1YnFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5NTcxMzMsImV4cCI6MjA3NDUzMzEzM30.hTt5jhhtH49Kdfm6aG_OJd4sW2Ls7OCqXEyiVRhYbDw';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    </script>
+</head>
+<body>
+    <!-- Header with Navigation -->
+    <header>
+        <nav class="navbar">
+            <div class="nav-brand">
+                <h1>GoldCrypto Admin</h1>
+            </div>
+            <div class="nav-menu">
+                <a href="index.html">Site Home</a>
+                <div class="admin-info">
+                    <span id="admin-name">Administrator</span>
+                    <button id="admin-logout">Logout</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="admin-dashboard">
+        <!-- Sidebar Navigation -->
+        <aside class="admin-sidebar">
+            <ul class="admin-menu">
+                <li><a href="#" class="admin-link active" data-section="dashboard">Dashboard</a></li>
+                <li><a href="#" class="admin-link" data-section="users">User Management</a></li>
+                <li><a href="#" class="admin-link" data-section="wallets">Wallet Settings</a></li>
+                <li><a href="#" class="admin-link" data-section="system">System Configuration</a></li>
+                <li><a href="#" class="admin-link" data-section="support">Support Chat</a></li>
+                <li><a href="#" class="admin-link" data-section="reports">Reports</a></li>
+            </ul>
+            
+            <!-- Quick Stats -->
+            <div class="quick-stats">
+                <h3>Quick Stats</h3>
+                <div class="stat-item">
+                    <span class="stat-label">Total Users</span>
+                    <span class="stat-value" id="total-users">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Active Today</span>
+                    <span class="stat-value" id="active-today">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Balance</span>
+                    <span class="stat-value" id="total-balance">$0</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Dashboard Content -->
+        <section class="admin-content">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="admin-section active">
+                <h2>Admin Dashboard</h2>
+                <div class="dashboard-cards">
+                    <div class="card">
+                        <div class="card-icon">👥</div>
+                        <div class="card-content">
+                            <h3>User Management</h3>
+                            <p>Manage user accounts, balances, and permissions</p>
+                            <button class="card-action" data-section="users">Go to Users</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">💰</div>
+                        <div class="card-content">
+                            <h3>Wallet Settings</h3>
+                            <p>Configure deposit addresses and methods</p>
+                            <button class="card-action" data-section="wallets">Go to Wallets</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">⚙️</div>
+                        <div class="card-content">
+                            <h3>System Configuration</h3>
+                            <p>Manage system settings and preferences</p>
+                            <button class="card-action" data-section="system">Go to System</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">💬</div>
+                        <div class="card-content">
+                            <h3>Support Chat</h3>
+                            <p>Communicate with users in real-time</p>
+                            <button class="card-action" data-section="support">Go to Chat</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Activity -->
+                <div class="recent-activity">
+                    <h3>Recent Activity</h3>
+                    <div class="activity-list" id="recent-activity">
+                        <!-- Activity will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Management Section -->
+            <div id="users-section" class="admin-section">
+                <h2>User Management</h2>
+                
+                <!-- User Search and Filters -->
+                <div class="user-filters">
+                    <div class="search-box">
+                        <input type="text" id="user-search" placeholder="Search by email or name...">
+                        <button id="search-users">Search</button>
+                    </div>
+                    <div class="filter-options">
+                        <select id="user-level-filter">
+                            <option value="all">All Levels</option>
+                            <option value="gold">Gold</option>
+                            <option value="premium">Premium</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                        <select id="user-status-filter">
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Users Table -->
+                <div class="users-table-container">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Email</th>
+                                <th>Name</th>
+                                <th>Level</th>
+                                <th>Balance</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <!-- Users will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="pagination">
+                    <button id="prev-page" disabled>Previous</button>
+                    <span id="page-info">Page 1 of 1</span>
+                    <button id="next-page" disabled>Next</button>
+                </div>
+                
+                <!-- User Edit Modal -->
+                <div id="user-edit-modal" class="modal">
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <h2>Edit User</h2>
+                        <form id="user-edit-form">
+                            <input type="hidden" id="edit-user-id">
+                            <div class="form-group">
+                                <label for="edit-user-email">Email</label>
+                                <input type="email" id="edit-user-email" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-user-name">Full Name</label>
+                                <input type="text" id="edit-user-name">
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-user-level">Account Level</label>
+                                <select id="edit-user-level">
+                                    <option value="gold">Gold</option>
+                                    <option value="premium">Premium</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-user-balance">Balance (USD)</label>
+                                <input type="number" id="edit-user-balance" step="0.01" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-user-status">Account Status</label>
+                                <select id="edit-user-status">
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="action-button">Save Changes</button>
+                                <button type="button" id="delete-user" class="danger-button">Delete User</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wallet Settings Section -->
+            <div id="wallets-section" class="admin-section">
+                <h2>Wallet Settings</h2>
+                
+                <!-- Deposit Wallets -->
+                <div class="wallet-settings">
+                    <h3>Deposit Wallet Addresses</h3>
+                    <div class="wallet-methods">
+                        <div class="wallet-method">
+                            <h4>USDT (TRC20)</h4>
+                            <div class="form-group">
+                                <label for="trc20-address">Wallet Address</label>
+                                <input type="text" id="trc20-address" class="wallet-address-input">
+                            </div>
+                            <div class="form-group">
+                                <label for="trc20-status">Status</label>
+                                <select id="trc20-status">
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+                            <button class="action-button save-wallet" data-type="trc20">Save TRC20 Settings</button>
+                        </div>
+                        
+                        <div class="wallet-method">
+                            <h4>USDT (ERC20)</h4>
+                            <div class="form-group">
+                                <label for="erc20-address">Wallet Address</label>
+                                <input type="text" id="erc20-address" class="wallet-address-input">
+                            </div>
+                            <div class="form-group">
+                                <label for="erc20-status">Status</label>
+                                <select id="erc20-status">
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+                            <button class="action-button save-wallet" data-type="erc20">Save ERC20 Settings</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Wallet Transactions -->
+                <div class="wallet-transactions">
+                    <h3>Recent Deposit Requests</h3>
+                    <div class="transactions-list" id="deposit-requests">
+                        <!-- Deposit requests will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Configuration Section -->
+            <div id="system-section" class="admin-section">
+                <h2>System Configuration</h2>
+                
+                <!-- Trading Settings -->
+                <div class="system-group">
+                    <h3>Trading Settings</h3>
+                    <form id="trading-settings-form">
+                        <div class="form-group">
+                            <label for="min-trade-amount">Minimum Trade Amount (USD)</label>
+                            <input type="number" id="min-trade-amount" value="10" min="1" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="max-leverage">Maximum Leverage</label>
+                            <select id="max-leverage">
+                                <option value="5">5x</option>
+                                <option value="10" selected>10x</option>
+                                <option value="20">20x</option>
+                                <option value="50">50x</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="premium-threshold">Premium Upgrade Threshold (USD)</label>
+                            <input type="number" id="premium-threshold" value="70" min="10" step="0.01">
+                        </div>
+                        <button type="submit" class="action-button">Save Trading Settings</button>
+                    </form>
+                </div>
+                
+                <!-- Withdrawal Settings -->
+                <div class="system-group">
+                    <h3>Withdrawal Settings</h3>
+                    <form id="withdrawal-settings-form">
+                        <div class="form-group">
+                            <label for="min-withdrawal">Minimum Withdrawal (USD)</label>
+                            <input type="number" id="min-withdrawal" value="10" min="1" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="withdrawal-fee">Withdrawal Fee (%)</label>
+                            <input type="number" id="withdrawal-fee" value="1" min="0" max="10" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="auto-approve-withdrawals">Auto-Approval</label>
+                            <select id="auto-approve-withdrawals">
+                                <option value="enabled">Enabled</option>
+                                <option value="disabled" selected>Disabled</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="action-button">Save Withdrawal Settings</button>
+                    </form>
+                </div>
+                
+                <!-- System Maintenance -->
+                <div class="system-group">
+                    <h3>System Maintenance</h3>
+                    <div class="maintenance-actions">
+                        <button id="backup-database" class="action-button">Backup Database</button>
+                        <button id="clear-cache" class="action-button">Clear Cache</button>
+                        <button id="system-status" class="action-button">Check System Status</button>
+                    </div>
+                    <div class="maintenance-log" id="maintenance-log">
+                        <!-- Maintenance logs will appear here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Support Chat Section -->
+            <div id="support-section" class="admin-section">
+                <h2>Support Chat</h2>
+                
+                <!-- Active Chats -->
+                <div class="chat-container">
+                    <div class="chat-sidebar">
+                        <h3>Active Conversations</h3>
+                        <div class="chat-list" id="chat-list">
+                            <!-- Active chats will be listed here -->
+                        </div>
+                    </div>
+                    
+                    <div class="chat-main">
+                        <div class="chat-header">
+                            <h3 id="current-chat-user">Select a conversation</h3>
+                            <span id="current-chat-status"></span>
+                        </div>
+                        <div class="chat-messages" id="admin-chat-messages">
+                            <!-- Messages will appear here -->
+                        </div>
+                        <div class="chat-input-area">
+                            <textarea id="admin-chat-input" placeholder="Type your message..." disabled></textarea>
+                            <button id="admin-send-message" disabled>Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Section -->
+            <div id="reports-section" class="admin-section">
+                <h2>Reports & Analytics</h2>
+                
+                <!-- Report Filters -->
+                <div class="report-filters">
+                    <div class="filter-group">
+                        <label for="report-type">Report Type</label>
+                        <select id="report-type">
+                            <option value="users">User Activity</option>
+                            <option value="trading">Trading Activity</option>
+                            <option value="financial">Financial Summary</option>
+                            <option value="system">System Performance</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="report-period">Time Period</label>
+                        <select id="report-period">
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="quarter">This Quarter</option>
+                            <option value="year">This Year</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    <div class="filter-group" id="custom-range" style="display: none;">
+                        <label for="start-date">Start Date</label>
+                        <input type="date" id="start-date">
+                        <label for="end-date">End Date</label>
+                        <input type="date" id="end-date">
+                    </div>
+                    <button id="generate-report" class="action-button">Generate Report</button>
+                </div>
+                
+                <!-- Report Results -->
+                <div class="report-results">
+                    <div id="report-content">
+                        <!-- Report will be displayed here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="confirmation-title">Confirm Action</h2>
+            <p id="confirmation-message">Are you sure you want to perform this action?</p>
+            <div class="modal-actions">
+                <button id="confirm-action" class="danger-button">Confirm</button>
+                <button id="cancel-action" class="secondary-button">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification System -->
+    <div id="notification-area"></div>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>

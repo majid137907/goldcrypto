@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - GoldCrypto</title>
+    <link rel="stylesheet" href="css/user.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://vbkwlrrmylztakuhubqs.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZia3dscnJteWx6dGFrdWh1YnFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5NTcxMzMsImV4cCI6MjA3NDUzMzEzM30.hTt5jhhtH49Kdfm6aG_OJd4sW2Ls7OCqXEyiVRhYbDw';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    </script>
+</head>
+<body>
+    <!-- Header with Navigation -->
+    <header>
+        <nav class="navbar">
+            <div class="nav-brand">
+                <h1>GoldCrypto</h1>
+            </div>
+            <div class="nav-menu">
+                <a href="index.html">Home</a>
+                <div class="user-info">
+                    <span id="user-balance">$0.00</span>
+                    <span id="user-level" class="level-gold">Gold</span>
+                    <button id="logout-btn">Logout</button>
+                </div>
+                <div class="language-selector">
+                    <select id="languageSelect">
+                        <option value="en">English</option>
+                        <option value="ar">العربية</option>
+                        <option value="es">Español</option>
+                    </select>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="dashboard">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="#" class="sidebar-link active" data-section="market">Market</a></li>
+                <li><a href="#" class="sidebar-link" data-section="trade">Trade</a></li>
+                <li><a href="#" class="sidebar-link" data-section="wallet">Wallet</a></li>
+                <li><a href="#" class="sidebar-link" data-section="settings">Settings</a></li>
+                <li><a href="#" class="sidebar-link" data-section="about">About Us</a></li>
+            </ul>
+            
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h3>Quick Actions</h3>
+                <button class="action-btn" id="deposit-btn">Deposit</button>
+                <button class="action-btn" id="withdraw-btn">Withdraw</button>
+                <button class="action-btn" id="transfer-btn">Internal Transfer</button>
+            </div>
+        </aside>
+
+        <!-- Dashboard Content -->
+        <section class="dashboard-content">
+            <!-- Market Section -->
+            <div id="market-section" class="content-section active">
+                <h2>Live Market Prices</h2>
+                <div class="market-prices" id="market-prices">
+                    <!-- Prices will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Trade Section -->
+            <div id="trade-section" class="content-section">
+                <h2>Trading Platform</h2>
+                <div class="trade-container">
+                    <div class="trade-controls">
+                        <div class="form-group">
+                            <label for="trade-symbol">Select Cryptocurrency</label>
+                            <select id="trade-symbol">
+                                <option value="BTC">Bitcoin (BTC)</option>
+                                <option value="ETH">Ethereum (ETH)</option>
+                                <option value="SOL">Solana (SOL)</option>
+                                <option value="ADA">Cardano (ADA)</option>
+                                <option value="XRP">Ripple (XRP)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="trade-type">Trade Type</label>
+                            <select id="trade-type">
+                                <option value="buy">Buy</option>
+                                <option value="sell">Sell</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="trade-amount">Amount (USD)</label>
+                            <input type="number" id="trade-amount" min="10" step="0.01" value="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="trade-leverage">Leverage</label>
+                            <select id="trade-leverage">
+                                <option value="1">1x</option>
+                                <option value="2">2x</option>
+                                <option value="5">5x</option>
+                                <option value="10">10x</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="entry-price">Entry Price (USD)</label>
+                            <input type="number" id="entry-price" step="0.01" readonly>
+                        </div>
+                        <button id="execute-trade" class="trade-btn">Execute Trade</button>
+                    </div>
+                    <div class="trade-chart">
+                        <canvas id="price-chart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Open Trades -->
+                <div class="open-trades">
+                    <h3>Open Trades</h3>
+                    <div id="open-trades-list">
+                        <!-- Open trades will be listed here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wallet Section -->
+            <div id="wallet-section" class="content-section">
+                <h2>Wallet Management</h2>
+                
+                <!-- Deposit Section -->
+                <div class="wallet-action" id="deposit-section">
+                    <h3>Deposit Funds</h3>
+                    <div class="deposit-methods">
+                        <div class="method-option">
+                            <input type="radio" id="trc20" name="deposit-method" value="trc20" checked>
+                            <label for="trc20">USDT (TRC20)</label>
+                        </div>
+                        <div class="method-option">
+                            <input type="radio" id="erc20" name="deposit-method" value="erc20">
+                            <label for="erc20">USDT (ERC20)</label>
+                        </div>
+                    </div>
+                    <div class="wallet-address">
+                        <p>Send funds to the following address:</p>
+                        <div class="address-display" id="deposit-address">
+                            <!-- Address will be loaded here -->
+                        </div>
+                        <button id="copy-address">Copy Address</button>
+                    </div>
+                    <div class="deposit-note">
+                        <p><strong>Note:</strong> After making a deposit, please contact support with your transaction ID for verification.</p>
+                    </div>
+                </div>
+                
+                <!-- Withdrawal Section -->
+                <div class="wallet-action" id="withdrawal-section">
+                    <h3>Withdraw Funds</h3>
+                    <form id="withdrawal-form">
+                        <div class="form-group">
+                            <label for="withdraw-amount">Amount (USD)</label>
+                            <input type="number" id="withdraw-amount" min="10" step="0.01" max="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="withdraw-address">Destination Wallet Address</label>
+                            <input type="text" id="withdraw-address" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="withdraw-method">Withdrawal Method</label>
+                            <select id="withdraw-method">
+                                <option value="trc20">USDT (TRC20)</option>
+                                <option value="erc20">USDT (ERC20)</option>
+                            </select>
+                        </div>
+                        <button type="submit" id="request-withdrawal" class="action-button">Request Withdrawal</button>
+                    </form>
+                    <div id="withdrawal-message" class="message"></div>
+                </div>
+                
+                <!-- Internal Transfer Section -->
+                <div class="wallet-action" id="transfer-section">
+                    <h3>Internal Transfer</h3>
+                    <form id="transfer-form">
+                        <div class="form-group">
+                            <label for="recipient-email">Recipient Email</label>
+                            <input type="email" id="recipient-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="transfer-amount">Amount (USD)</label>
+                            <input type="number" id="transfer-amount" min="1" step="0.01" max="0">
+                        </div>
+                        <button type="submit" id="execute-transfer" class="action-button">Transfer Funds</button>
+                    </form>
+                    <div id="transfer-message" class="message"></div>
+                </div>
+                
+                <!-- Transaction History -->
+                <div class="transaction-history">
+                    <h3>Transaction History</h3>
+                    <div class="history-filters">
+                        <select id="history-type">
+                            <option value="all">All Transactions</option>
+                            <option value="deposit">Deposits</option>
+                            <option value="withdrawal">Withdrawals</option>
+                            <option value="transfer">Transfers</option>
+                            <option value="trade">Trades</option>
+                        </select>
+                    </div>
+                    <div class="history-list" id="transaction-history">
+                        <!-- Transactions will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settings-section" class="content-section">
+                <h2>Account Settings</h2>
+                
+                <!-- Personal Information -->
+                <div class="settings-group">
+                    <h3>Personal Information</h3>
+                    <form id="personal-info-form">
+                        <div class="form-group">
+                            <label for="user-name">Full Name</label>
+                            <input type="text" id="user-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="user-email">Email Address</label>
+                            <input type="email" id="user-email" readonly>
+                        </div>
+                        <button type="submit" class="action-button">Update Information</button>
+                    </form>
+                </div>
+                
+                <!-- Change Password -->
+                <div class="settings-group">
+                    <h3>Change Password</h3>
+                    <form id="password-form">
+                        <div class="form-group">
+                            <label for="current-password">Current Password</label>
+                            <input type="password" id="current-password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-password">New Password</label>
+                            <input type="password" id="new-password" required minlength="6">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm-password">Confirm New Password</label>
+                            <input type="password" id="confirm-password" required>
+                        </div>
+                        <button type="submit" class="action-button">Change Password</button>
+                    </form>
+                    <div id="password-message" class="message"></div>
+                </div>
+                
+                <!-- Security Settings -->
+                <div class="settings-group">
+                    <h3>Security Settings</h3>
+                    <div class="security-option">
+                        <input type="checkbox" id="two-factor" name="two-factor">
+                        <label for="two-factor">Enable Two-Factor Authentication (Email)</label>
+                    </div>
+                    <div class="security-option">
+                        <input type="checkbox" id="login-alerts" name="login-alerts" checked>
+                        <label for="login-alerts">Receive Login Alerts</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About Us Section -->
+            <div id="about-section" class="content-section">
+                <h2>About GoldCrypto</h2>
+                <div class="about-content">
+                    <div class="about-info">
+                        <h3>Our Story</h3>
+                        <p>GoldCrypto was established in 2022 with a vision to make cryptocurrency trading accessible to everyone. Our platform combines cutting-edge technology with user-friendly design to provide a seamless trading experience.</p>
+                        
+                        <h3>Company Information</h3>
+                        <ul>
+                            <li><strong>Founded:</strong> 2022</li>
+                            <li><strong>Headquarters:</strong> Dubai, UAE</li>
+                            <li><strong>Registration:</strong> DSO-IFZA, Dubai Silicon Oasis, UAE</li>
+                            <li><strong>Regulation:</strong> Compliant with international financial standards</li>
+                        </ul>
+                        
+                        <h3>Our Mission</h3>
+                        <p>To empower individuals and businesses to participate in the digital economy through secure, transparent, and innovative cryptocurrency trading solutions.</p>
+                        
+                        <h3>Security & Trust</h3>
+                        <p>We prioritize the security of our users' funds and data. Our platform implements industry-leading security measures including cold storage for digital assets, two-factor authentication, and encrypted communications.</p>
+                    </div>
+                    
+                    <div class="contact-info">
+                        <h3>Contact Information</h3>
+                        <p><strong>Customer Support:</strong> support@goldcrypto.com</p>
+                        <p><strong>Business Inquiries:</strong> business@goldcrypto.com</p>
+                        <p><strong>Phone:</strong> +971 4 123 4567</p>
+                        <p><strong>Address:</strong> Dubai Silicon Oasis, Dubai, UAE</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <!-- Deposit Modal -->
+    <div id="deposit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Deposit Funds</h2>
+            <div id="deposit-modal-content">
+                <!-- Content will be loaded by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Withdrawal Modal -->
+    <div id="withdrawal-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Withdraw Funds</h2>
+            <div id="withdrawal-modal-content">
+                <!-- Content will be loaded by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer Modal -->
+    <div id="transfer-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Internal Transfer</h2>
+            <div id="transfer-modal-content">
+                <!-- Content will be loaded by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Verification Modal -->
+    <div id="email-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Email Verification Required</h2>
+            <div id="email-modal-content">
+                <p>We've sent a verification code to your email address. Please enter it below to proceed.</p>
+                <div class="form-group">
+                    <label for="verification-code">Verification Code</label>
+                    <input type="text" id="verification-code" maxlength="6">
+                </div>
+                <button id="verify-code" class="action-button">Verify</button>
+                <button id="resend-code" class="secondary-button">Resend Code</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Online Chat Widget -->
+    <div class="chat-widget">
+        <div class="chat-header">
+            <span>Live Support</span>
+            <button class="chat-toggle">-</button>
+        </div>
+        <div class="chat-body">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message system">Welcome to GoldCrypto support. How can we help you?</div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="chatInput" placeholder="Type your message...">
+                <button id="sendMessage">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/user.js"></script>
+</body>
+</html>

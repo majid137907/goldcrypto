@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoldCrypto - Cryptocurrency Trading Platform</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://vbkwlrrmylztakuhubqs.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZia3dscnJteWx6dGFrdWh1YnFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5NTcxMzMsImV4cCI6MjA3NDUzMzEzM30.hTt5jhhtH49Kdfm6aG_OJd4sW2Ls7OCqXEyiVRhYbDw';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    </script>
+</head>
+<body>
+    <!-- Header with Navigation -->
+    <header>
+        <nav class="navbar">
+            <div class="nav-brand">
+                <h1>GoldCrypto</h1>
+            </div>
+            <div class="nav-menu">
+                <a href="index.html">Home</a>
+                <a href="login.html">Login/Signup</a>
+                <div class="language-selector">
+                    <select id="languageSelect">
+                        <option value="en">English</option>
+                        <option value="ar">العربية</option>
+                        <option value="es">Español</option>
+                    </select>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Banner Section -->
+        <section class="banner">
+            <div class="banner-content">
+                <h2>200% Bonus on First Deposit!</h2>
+                <p>Start trading with double your initial investment</p>
+                <button class="cta-button" onclick="location.href='login.html'">Get Started</button>
+            </div>
+        </section>
+
+        <!-- Live Prices Section -->
+        <section class="prices-section">
+            <h2>Live Cryptocurrency Prices</h2>
+            <div id="pricesContainer" class="prices-grid">
+                <!-- Prices will be loaded here by JavaScript -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2022 GoldCrypto. All rights reserved.</p>
+            <p>Address: Dubai, UAE</p>
+        </div>
+    </footer>
+
+    <!-- Online Chat Widget -->
+    <div class="chat-widget">
+        <div class="chat-header">
+            <span>Live Support</span>
+            <button class="chat-toggle">-</button>
+        </div>
+        <div class="chat-body">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message system">Welcome to GoldCrypto support. How can we help you?</div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="chatInput" placeholder="Type your message..." disabled>
+                <button id="sendMessage" disabled>Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/coinmarketcap.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
