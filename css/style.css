@@ -1,160 +1,295 @@
-/* Base Styles */
+/* Base Styles - Improved */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-body {
-    font-family: 'Arial', sans-serif;
-    background-color: #000;
-    color: #d4af37; /* Gold color */
-    line-height: 1.6;
+:root {
+    --primary-gold: #d4af37;
+    --gold-light: #f0e68c;
+    --gold-dark: #b8941f;
+    --bg-dark: #0a0a0a;
+    --bg-card: #111;
+    --bg-hover: #1a1a1a;
+    --text-light: #ffffff;
+    --text-muted: #aaaaaa;
+    --success: #4CAF50;
+    --error: #F44336;
+    --warning: #FF9800;
+    --info: #2196F3;
 }
 
-/* Navigation */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+    color: var(--text-light);
+    line-height: 1.7;
+    min-height: 100vh;
+}
+
+/* Enhanced Navigation */
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 1rem 5%;
-    background-color: #111;
-    border-bottom: 2px solid #d4af37;
+    background: rgba(17, 17, 17, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 2px solid var(--primary-gold);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(212, 175, 55, 0.1);
 }
 
 .nav-brand h1 {
-    font-size: 2rem;
-    font-weight: bold;
+    font-size: 2.2rem;
+    font-weight: 700;
+    background: linear-gradient(45deg, var(--primary-gold), var(--gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
 }
 
 .nav-menu a {
-    color: #d4af37;
+    color: var(--text-light);
     text-decoration: none;
-    margin-left: 2rem;
-    transition: color 0.3s;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    position: relative;
 }
 
 .nav-menu a:hover {
-    color: #f0e68c;
+    color: var(--primary-gold);
+    background: rgba(212, 175, 55, 0.1);
 }
 
-.language-selector select {
-    background-color: #222;
-    color: #d4af37;
-    border: 1px solid #d4af37;
-    padding: 0.5rem;
-    border-radius: 4px;
-    margin-left: 2rem;
+.nav-menu a::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--primary-gold);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
 }
 
-/* Banner */
+.nav-menu a:hover::after {
+    width: 80%;
+}
+
+/* Enhanced Banner */
 .banner {
-    background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
-                url('../assets/banner-bg.jpg') center/cover;
-    padding: 5rem 2rem;
+    background: linear-gradient(135deg, 
+        rgba(0, 0, 0, 0.9) 0%, 
+        rgba(26, 26, 26, 0.8) 100%),
+        url('../assets/banner-bg.jpg') center/cover;
+    padding: 6rem 2rem;
     text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at center, 
+        rgba(212, 175, 55, 0.1) 0%, 
+        transparent 70%);
+}
+
+.banner-content {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    margin: 0 auto;
 }
 
 .banner-content h2 {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+    font-size: 3.5rem;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(45deg, var(--primary-gold), var(--gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .banner-content p {
-    font-size: 1.2rem;
-    margin-bottom: 2rem;
+    font-size: 1.3rem;
+    margin-bottom: 2.5rem;
+    color: var(--text-muted);
+    line-height: 1.8;
 }
 
+/* Enhanced CTA Button */
 .cta-button {
-    background-color: #d4af37;
+    background: linear-gradient(45deg, var(--primary-gold), var(--gold-dark));
     color: #000;
     border: none;
-    padding: 1rem 2rem;
-    font-size: 1.1rem;
-    border-radius: 5px;
+    padding: 1.2rem 3rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border-radius: 50px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+    position: relative;
+    overflow: hidden;
 }
 
 .cta-button:hover {
-    background-color: #f0e68c;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
+    background: linear-gradient(45deg, var(--gold-light), var(--primary-gold));
 }
 
-/* Prices Section */
+.cta-button:active {
+    transform: translateY(-1px);
+}
+
+/* Enhanced Prices Section */
 .prices-section {
-    padding: 3rem 5%;
+    padding: 5rem 5%;
+    background: var(--bg-dark);
 }
 
 .prices-section h2 {
     text-align: center;
-    margin-bottom: 2rem;
-    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    font-size: 2.8rem;
+    color: var(--text-light);
+    position: relative;
+}
+
+.prices-section h2::after {
+    content: '';
+    display: block;
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(45deg, var(--primary-gold), var(--gold-light));
+    margin: 1rem auto;
+    border-radius: 2px;
 }
 
 .prices-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .price-card {
-    background-color: #111;
-    border: 1px solid #d4af37;
-    border-radius: 8px;
-    padding: 1.5rem;
+    background: linear-gradient(145deg, #111, #1a1a1a);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 16px;
+    padding: 2rem;
     text-align: center;
-    transition: transform 0.3s;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.price-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(212, 175, 55, 0.1), 
+        transparent);
+    transition: left 0.6s ease;
+}
+
+.price-card:hover::before {
+    left: 100%;
 }
 
 .price-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-8px);
+    border-color: var(--primary-gold);
+    box-shadow: 0 12px 40px rgba(212, 175, 55, 0.2);
 }
 
 .price-card h3 {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     margin-bottom: 1rem;
+    color: var(--primary-gold);
 }
 
 .price-value {
-    font-size: 1.8rem;
-    font-weight: bold;
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 1rem 0;
+    color: var(--text-light);
+}
+
+.price-change {
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.3rem 1rem;
+    border-radius: 20px;
+    display: inline-block;
 }
 
 .price-change.positive {
+    background: rgba(76, 175, 80, 0.2);
     color: #4CAF50;
 }
 
 .price-change.negative {
+    background: rgba(244, 67, 54, 0.2);
     color: #F44336;
 }
 
-/* Footer */
+/* Enhanced Footer */
 footer {
-    background-color: #111;
-    padding: 2rem 5%;
+    background: linear-gradient(180deg, #111 0%, #000 100%);
+    padding: 3rem 5%;
     text-align: center;
-    border-top: 1px solid #d4af37;
-    margin-top: 3rem;
+    border-top: 1px solid rgba(212, 175, 55, 0.3);
+    margin-top: 4rem;
 }
 
-/* Chat Widget */
+/* Enhanced Chat Widget */
 .chat-widget {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 300px;
-    background-color: #111;
-    border: 1px solid #d4af37;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    bottom: 30px;
+    right: 30px;
+    width: 350px;
+    background: linear-gradient(145deg, #111, #1a1a1a);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(212, 175, 55, 0.2);
     z-index: 1000;
+    overflow: hidden;
 }
 
 .chat-header {
-    background-color: #222;
-    padding: 0.8rem;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
+    background: linear-gradient(45deg, var(--primary-gold), var(--gold-dark));
+    padding: 1.2rem;
+    color: #000;
+    font-weight: 600;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -163,81 +298,153 @@ footer {
 .chat-body {
     display: flex;
     flex-direction: column;
-    height: 300px;
+    height: 400px;
 }
 
 .chat-messages {
     flex: 1;
-    padding: 1rem;
+    padding: 1.5rem;
     overflow-y: auto;
+    background: var(--bg-card);
 }
 
 .message {
     margin-bottom: 1rem;
-    padding: 0.5rem;
-    border-radius: 4px;
+    padding: 1rem;
+    border-radius: 12px;
+    max-width: 80%;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .message.user {
-    background-color: #333;
-    text-align: right;
+    background: linear-gradient(45deg, var(--primary-gold), var(--gold-light));
+    color: #000;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
 }
 
 .message.support {
-    background-color: #222;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    border-bottom-left-radius: 4px;
 }
 
 .message.system {
-    background-color: #444;
+    background: rgba(212, 175, 55, 0.1);
+    color: var(--primary-gold);
     font-style: italic;
+    margin: 0 auto;
+    text-align: center;
+    max-width: 90%;
 }
 
 .chat-input {
     display: flex;
-    padding: 0.5rem;
-    border-top: 1px solid #333;
+    padding: 1rem;
+    background: rgba(17, 17, 17, 0.8);
+    border-top: 1px solid rgba(51, 51, 51, 0.5);
 }
 
 .chat-input input {
     flex: 1;
-    background-color: #222;
-    border: 1px solid #d4af37;
-    color: #d4af37;
-    padding: 0.5rem;
-    border-radius: 4px;
-    margin-right: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: var(--text-light);
+    padding: 0.8rem;
+    border-radius: 8px;
+    margin-right: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.chat-input input:focus {
+    outline: none;
+    border-color: var(--primary-gold);
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
 }
 
 .chat-input button {
-    background-color: #d4af37;
+    background: linear-gradient(45deg, var(--primary-gold), var(--gold-dark));
     color: #000;
     border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
     cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
 
-/* Responsive Design */
+.chat-input button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
+/* Enhanced Responsive Design */
 @media (max-width: 768px) {
     .navbar {
         flex-direction: column;
         padding: 1rem;
+        gap: 1rem;
     }
     
     .nav-menu {
-        margin-top: 1rem;
+        flex-direction: column;
+        gap: 0.5rem;
+        width: 100%;
+    }
+    
+    .nav-menu a {
+        text-align: center;
+        width: 100%;
     }
     
     .banner-content h2 {
-        font-size: 2rem;
+        font-size: 2.5rem;
+    }
+    
+    .banner-content p {
+        font-size: 1.1rem;
     }
     
     .prices-grid {
         grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .price-card {
+        padding: 1.5rem;
     }
     
     .chat-widget {
-        width: 90%;
-        right: 5%;
+        width: 95%;
+        right: 2.5%;
+        bottom: 20px;
     }
+    
+    .banner {
+        padding: 4rem 1rem;
+    }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, var(--primary-gold), var(--gold-light));
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(45deg, var(--gold-light), var(--primary-gold));
 }
