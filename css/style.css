@@ -6,201 +6,201 @@
 }
 
 :root {
-    --primary-color: #d4af37;
-    --primary-dark: #b8941f;
-    --primary-light: #e6c967;
-    --secondary-color: #000000;
-    --background-dark: #0a0a0a;
-    --background-light: #1a1a1a;
-    --text-primary: #ffffff;
-    --text-secondary: #cccccc;
-    --text-muted: #888888;
-    --success-color: #4CAF50;
-    --error-color: #f44336;
-    --warning-color: #ff9800;
+    --primary: #1a1a2e;
+    --secondary: #16213e;
+    --accent: #0f3460;
+    --highlight: #e94560;
+    --gold: #d4af37;
+    --silver: #c0c0c0;
+    --bronze: #cd7f32;
+    --success: #28a745;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --info: #17a2b8;
+    --light: #f8f9fa;
+    --dark: #343a40;
+    --gradient: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    --gradient-gold: linear-gradient(135deg, #d4af37, #f7ef8a);
+    --gradient-silver: linear-gradient(135deg, #c0c0c0, #e8e8e8);
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.2);
     --border-radius: 8px;
-    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     --transition: all 0.3s ease;
 }
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, var(--background-dark) 0%, #1a1a1a 100%);
-    color: var(--text-primary);
-    line-height: 1.6;
+    background: var(--gradient);
+    color: var(--light);
     min-height: 100vh;
-    overflow-x: hidden;
+    line-height: 1.6;
 }
 
 /* Header و Navigation */
-header {
-    background-color: rgba(10, 10, 10, 0.95);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-}
-
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 1rem 2rem;
-    max-width: 1400px;
-    margin: 0 auto;
+    background: rgba(26, 26, 46, 0.9);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 
 .nav-brand h1 {
-    color: var(--primary-color);
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
     font-size: 1.8rem;
     font-weight: 700;
-    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-brand h1::before {
+    content: "₿";
+    font-size: 2rem;
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
 }
 
 .nav-menu {
     display: flex;
     align-items: center;
-    gap: 2rem;
+    gap: 1.5rem;
 }
 
 .nav-menu a {
-    color: var(--text-primary);
+    color: var(--light);
     text-decoration: none;
-    font-weight: 500;
     padding: 0.5rem 1rem;
     border-radius: var(--border-radius);
     transition: var(--transition);
-    position: relative;
+    font-weight: 500;
 }
 
-.nav-menu a:hover {
-    color: var(--primary-color);
-}
-
-.nav-menu a.active {
-    color: var(--primary-color);
-    background-color: rgba(212, 175, 55, 0.1);
+.nav-menu a:hover, .nav-menu a.active {
+    background: var(--gradient-gold);
+    color: var(--primary);
+    transform: translateY(-2px);
 }
 
 .language-selector select {
-    background-color: var(--background-light);
-    color: var(--text-primary);
-    border: 1px solid rgba(212, 175, 55, 0.3);
+    background: var(--accent);
+    color: var(--light);
+    border: 1px solid var(--gold);
     border-radius: var(--border-radius);
-    padding: 0.5rem 1rem;
+    padding: 0.5rem;
     cursor: pointer;
     transition: var(--transition);
 }
 
 .language-selector select:focus {
     outline: none;
-    border-color: var(--primary-color);
-}
-
-/* Main Content */
-main {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 2rem;
+    box-shadow: 0 0 0 2px var(--gold);
 }
 
 /* Banner Section */
 .banner {
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(10, 10, 10, 0.8) 100%);
-    border-radius: var(--border-radius);
     padding: 4rem 2rem;
     text-align: center;
-    margin-bottom: 3rem;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid rgba(212, 175, 55, 0.2);
-}
-
-.banner::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="%23d4af37" opacity="0.05"><polygon points="50,0 100,50 50,100 0,50"/></svg>');
-    background-size: 80px;
+    background: linear-gradient(135deg, rgba(26, 26, 46, 0.8), rgba(15, 52, 96, 0.8)), 
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><rect fill="%231a1a2e" width="1200" height="800"/><g fill="%23d4af37" opacity="0.1"><circle cx="200" cy="100" r="50"/><circle cx="800" cy="300" r="80"/><circle cx="500" cy="600" r="60"/><circle cx="1000" cy="150" r="40"/><circle cx="300" cy="500" r="70"/></g></svg>');
+    background-size: cover;
+    background-position: center;
+    margin: 1rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
 }
 
 .banner-content h2 {
-    font-size: 2.5rem;
+    font-size: 3rem;
     margin-bottom: 1rem;
-    color: var(--primary-color);
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .banner-content p {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     margin-bottom: 2rem;
-    color: var(--text-secondary);
+    color: var(--silver);
 }
 
 .cta-button {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-    color: var(--secondary-color);
+    background: var(--gradient-gold);
+    color: var(--primary);
     border: none;
-    padding: 1rem 2.5rem;
-    font-size: 1.1rem;
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
     font-weight: 600;
     border-radius: 50px;
     cursor: pointer;
     transition: var(--transition);
-    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+    box-shadow: var(--shadow);
 }
 
 .cta-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
 }
 
-/* Prices Section */
+/* Live Prices Section */
 .prices-section {
-    margin-bottom: 3rem;
+    padding: 3rem 2rem;
+    margin: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--border-radius);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
 }
 
 .prices-section h2 {
     text-align: center;
     margin-bottom: 2rem;
-    color: var(--primary-color);
+    color: var(--gold);
     font-size: 2rem;
 }
 
 .prices-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1.5rem;
 }
 
 .price-card {
-    background: rgba(26, 26, 26, 0.8);
-    border: 1px solid rgba(212, 175, 55, 0.2);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: var(--border-radius);
     padding: 1.5rem;
     text-align: center;
     transition: var(--transition);
-    backdrop-filter: blur(10px);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    backdrop-filter: blur(5px);
 }
 
 .price-card:hover {
     transform: translateY(-5px);
-    border-color: var(--primary-color);
-    box-shadow: var(--box-shadow);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--gold);
 }
 
 .price-card h3 {
-    color: var(--primary-color);
-    font-size: 1.5rem;
+    color: var(--gold);
     margin-bottom: 0.5rem;
+    font-size: 1.5rem;
 }
 
 .price-card p {
-    color: var(--text-secondary);
+    color: var(--silver);
     margin-bottom: 1rem;
     font-size: 0.9rem;
 }
@@ -209,6 +209,7 @@ main {
     font-size: 1.8rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
+    color: var(--light);
 }
 
 .price-change {
@@ -219,28 +220,29 @@ main {
 }
 
 .price-change.positive {
-    background-color: rgba(76, 175, 80, 0.2);
-    color: #4CAF50;
+    background: rgba(40, 167, 69, 0.2);
+    color: var(--success);
+    border: 1px solid var(--success);
 }
 
 .price-change.negative {
-    background-color: rgba(244, 67, 54, 0.2);
-    color: #f44336;
+    background: rgba(220, 53, 69, 0.2);
+    color: var(--danger);
+    border: 1px solid var(--danger);
 }
 
 /* Footer */
 footer {
-    background-color: var(--background-dark);
-    border-top: 1px solid rgba(212, 175, 55, 0.2);
+    background: rgba(26, 26, 46, 0.9);
     padding: 2rem;
+    text-align: center;
     margin-top: 3rem;
+    border-top: 1px solid rgba(212, 175, 55, 0.3);
 }
 
-.footer-content {
-    max-width: 1400px;
-    margin: 0 auto;
-    text-align: center;
-    color: var(--text-muted);
+.footer-content p {
+    margin-bottom: 0.5rem;
+    color: var(--silver);
 }
 
 /* Chat Widget */
@@ -249,17 +251,17 @@ footer {
     bottom: 2rem;
     right: 2rem;
     width: 350px;
-    background: var(--background-light);
-    border: 1px solid rgba(212, 175, 55, 0.3);
+    background: var(--secondary);
     border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
+    box-shadow: var(--shadow-lg);
     z-index: 1000;
     overflow: hidden;
+    border: 1px solid rgba(212, 175, 55, 0.3);
 }
 
 .chat-header {
-    background: var(--primary-color);
-    color: var(--secondary-color);
+    background: var(--gradient-gold);
+    color: var(--primary);
     padding: 1rem;
     display: flex;
     justify-content: space-between;
@@ -270,14 +272,20 @@ footer {
 .chat-toggle {
     background: none;
     border: none;
-    color: var(--secondary-color);
+    color: var(--primary);
     font-size: 1.2rem;
     cursor: pointer;
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: var(--transition);
+}
+
+.chat-toggle:hover {
+    background: rgba(0, 0, 0, 0.1);
 }
 
 .chat-body {
@@ -303,21 +311,22 @@ footer {
 }
 
 .message.system {
-    background-color: rgba(212, 175, 55, 0.1);
-    border-left: 3px solid var(--primary-color);
-    align-self: flex-start;
+    background: rgba(15, 52, 96, 0.5);
+    align-self: center;
+    color: var(--silver);
+    font-style: italic;
 }
 
 .message.user {
-    background-color: rgba(26, 26, 26, 0.8);
-    border: 1px solid rgba(212, 175, 55, 0.3);
+    background: var(--gradient-gold);
+    color: var(--primary);
     align-self: flex-end;
 }
 
 .message.support {
-    background-color: rgba(76, 175, 80, 0.1);
-    border-left: 3px solid var(--success-color);
+    background: rgba(255, 255, 255, 0.1);
     align-self: flex-start;
+    color: var(--light);
 }
 
 .chat-input {
@@ -329,31 +338,34 @@ footer {
 
 .chat-input input {
     flex: 1;
-    background: var(--background-dark);
+    padding: 0.8rem;
     border: 1px solid rgba(212, 175, 55, 0.3);
     border-radius: var(--border-radius);
-    padding: 0.8rem;
-    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--light);
+    transition: var(--transition);
 }
 
 .chat-input input:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
 }
 
 .chat-input button {
-    background: var(--primary-color);
-    color: var(--secondary-color);
+    background: var(--gradient-gold);
+    color: var(--primary);
     border: none;
-    border-radius: var(--border-radius);
     padding: 0.8rem 1.2rem;
-    font-weight: 600;
+    border-radius: var(--border-radius);
     cursor: pointer;
+    font-weight: 600;
     transition: var(--transition);
 }
 
 .chat-input button:hover {
-    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
 }
 
 /* Responsive Design */
@@ -365,19 +377,30 @@ footer {
     }
     
     .nav-menu {
-        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
     }
     
     .banner {
         padding: 2rem 1rem;
+        margin: 0.5rem;
     }
     
     .banner-content h2 {
         font-size: 2rem;
     }
     
+    .banner-content p {
+        font-size: 1.2rem;
+    }
+    
+    .prices-section {
+        padding: 2rem 1rem;
+        margin: 0.5rem;
+    }
+    
     .prices-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     }
     
     .chat-widget {
@@ -388,16 +411,29 @@ footer {
 }
 
 @media (max-width: 480px) {
-    main {
-        padding: 1rem;
-    }
-    
     .banner-content h2 {
         font-size: 1.5rem;
     }
     
-    .cta-button {
-        padding: 0.8rem 1.5rem;
+    .banner-content p {
         font-size: 1rem;
+    }
+    
+    .prices-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .price-card {
+        padding: 1rem;
+    }
+    
+    .chat-widget {
+        width: calc(100% - 1rem);
+        right: 0.5rem;
+        bottom: 0.5rem;
+    }
+    
+    .chat-body {
+        height: 300px;
     }
 }
