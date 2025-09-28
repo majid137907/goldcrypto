@@ -941,7 +941,8 @@ function setupChatWidget() {
     });
 }
 
-function sendMessage() {
+// تابع sendMessage را اصلاح کنید
+async function sendMessage() {
     const chatInput = document.getElementById('chatInput');
     const chatMessages = document.getElementById('chatMessages');
     const message = chatInput.value.trim();
@@ -959,22 +960,31 @@ function sendMessage() {
         // Scroll to bottom
         chatMessages.scrollTop = chatMessages.scrollHeight;
         
-        // Save message to Supabase
-        supabase
-            .from('chat_messages')
-            .insert([
-                {
-                    user_id: userData.id,
-                    message: message,
-                    is_admin: false,
-                    created_at: new Date().toISOString()
-                }
-            ])
-            .then(({ error }) => {
-                if (error) console.error('Error saving message:', error);
-            });
+        try {
+            // Save message to Supabase
+            const { error } = await supabase
+                .from('chat_messages')
+                .insert([
+                    {
+                        user_id: userData.id,
+                        message: message,
+                        is_admin: false,
+                        is_read: false,
+                        created_at: new Date().toISOString()
+                    }
+                ]);
+                
+            if (error) throw error;
+            
+            // نمایش پیام موفقیت
+            console.log('Message sent to support');
+            
+        } catch (error) {
+            console.error('Error saving message:', error);
+            // حتی در صورت خطا، پیام کاربر نمایش داده شود
+        }
         
-        // Simulate support response
+        // Simulate support response after a delay
         setTimeout(() => {
             const supportMessage = document.createElement('div');
             supportMessage.className = 'message support';
@@ -982,7 +992,7 @@ function sendMessage() {
             chatMessages.appendChild(supportMessage);
             chatMessages.scrollTop = chatMessages.scrollHeight;
             
-            // Save support response to Supabase
+            // Save automated response to database
             supabase
                 .from('chat_messages')
                 .insert([
@@ -990,16 +1000,16 @@ function sendMessage() {
                         user_id: userData.id,
                         message: 'Thank you for your message. Our support team will respond shortly.',
                         is_admin: true,
+                        is_read: false,
                         created_at: new Date().toISOString()
                     }
                 ])
                 .then(({ error }) => {
                     if (error) console.error('Error saving support message:', error);
                 });
-        }, 1000);
+        }, 2000);
     }
 }
-
 function showMessage(elementId, text, type) {
     const element = document.getElementById(elementId);
     element.textContent = text;
@@ -1074,4 +1084,5 @@ async function verifyWithdrawalCode() {
 function resendVerificationCode() {
     alert('Verification code has been resent to your email.');
 }
+
 
