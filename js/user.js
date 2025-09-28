@@ -226,32 +226,37 @@ async function loadMarketPrices() {
     }
 }
 
+// در تابع loadWalletAddresses اصلاحات زیر را اعمال کنید
 async function loadWalletAddresses() {
     try {
         const selectedMethod = document.querySelector('input[name="deposit-method"]:checked').value;
         
-        // Get wallet addresses from Supabase
-        const { data, error } = await supabase
-            .from('wallets')
-            .select('*')
-            .eq('type', selectedMethod)
-            .eq('is_active', true)
-            .single();
-            
-        if (error) {
-            // If no wallet found, show default message
-            document.getElementById('deposit-address').textContent = 'Wallet address not configured. Please contact support.';
-            return;
+        // استفاده از آدرس‌های ثابت به جای خواندن از دیتابیس
+        let walletAddress = '';
+        
+        if (selectedMethod === 'trc20') {
+            walletAddress = 'THdTNV89Y57cnReqZvZ9JGuBTw25me5UGM';
+        } else if (selectedMethod === 'erc20') {
+            walletAddress = '0x572d104aaa445bd8a82a19315e09cc3472e72cb2';
         }
         
-        document.getElementById('deposit-address').textContent = data.address;
+        document.getElementById('deposit-address').textContent = walletAddress;
         
     } catch (error) {
         console.error('Error loading wallet addresses:', error);
-        document.getElementById('deposit-address').textContent = 'Error loading address. Please try again.';
+        // استفاده از آدرس‌های پیش‌فرض در صورت خطا
+        const selectedMethod = document.querySelector('input[name="deposit-method"]:checked').value;
+        let defaultAddress = '';
+        
+        if (selectedMethod === 'trc20') {
+            defaultAddress = 'THdTNV89Y57cnReqZvZ9JGuBTw25me5UGM';
+        } else if (selectedMethod === 'erc20') {
+            defaultAddress = '0x572d104aaa445bd8a82a19315e09cc3472e72cb2';
+        }
+        
+        document.getElementById('deposit-address').textContent = defaultAddress;
     }
 }
-
 function copyDepositAddress() {
     const address = document.getElementById('deposit-address').textContent;
     if (address && !address.includes('Error') && !address.includes('not configured')) {
@@ -1069,3 +1074,4 @@ async function verifyWithdrawalCode() {
 function resendVerificationCode() {
     alert('Verification code has been resent to your email.');
 }
+
