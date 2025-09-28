@@ -1,42 +1,131 @@
-// coinmarketcap.js - نسخه اصلاح شده با Proxy
-const CMC_API_KEY = '630809ef-2b4a-4405-8abd-2cf8f4916b39';
-const PROXY_URL = 'https://cors-anywhere.herokuapp.com/'; // یا یک پروکسی دیگر
-const CMC_API_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
+// coinmarketcap-alternative.js
+const API_URLS = [
+    'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false',
+    'https://api.binance.com/api/v3/ticker/24hr'
+];
 
-// لیست ارزهای مورد نظر
 const CRYPTO_SYMBOLS = ['BTC', 'ETH', 'USDT', 'BNB', 'XRP', 'ADA', 'SOL', 'DOT'];
 
 async function fetchCryptoPrices() {
     try {
-        console.log('Fetching prices from CoinMarketCap...');
+        console.log('Fetching prices from CoinGecko...');
         
-        // استفاده از Proxy برای دور زدن CORS
-        const response = await fetch(PROXY_URL + CMC_API_URL, {
-            headers: {
-                'X-CMC_PRO_API_KEY': CMC_API_KEY,
-                'Accept': 'application/json'
-            }
-        });
-
+        // استفاده از CoinGecko API (رایگان و بدون نیاز به API Key)
+        const response = await fetch(API_URLS[0]);
+        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
-        console.log('CoinMarketCap data:', data);
-        displayPrices(data.data);
+        console.log('CoinGecko data:', data);
+        displayPricesFromCoinGecko(data);
 
     } catch (error) {
-        console.error('Error fetching prices from CoinMarketCap:', error);
-        console.log('Using mock data as fallback...');
-        useMockData();
+        console.error('Error fetching prices from CoinGecko:', error);
+        console.log('Trying Binance API...');
+        try {
+            await fetchFromBinance();
+        } catch (binanceError) {
+            console.error('Error fetching from Binance:', binanceError);
+            console.log('Using mock data as fallback...');
+            useMockData();
+        }
     }
 }
 
-// بقیه کدها بدون تغییر...
+async function fetchFromBinance() {
+    const response = await fetch(API_URLS[1]);
+    
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
+    const data = await response.json();
+    displayPricesFromBinance(data);
+}
+
+function displayPricesFromCoinGecko(data) {
+    const container = document.getElementById('pricesContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    // فیلتر کردن فقط ارزهای مورد نظر
+    const filteredPrices = data.filter(crypto => 
+        CRYPTO_SYMBOLS.includes(crypto.symbol.toUpperCase())
+    );
+    
+    filteredPrices.forEach(crypto => {
+        const priceCard = document.createElement('div');
+        priceCard.className = 'price-card';
+        
+        const change = crypto.price_change_percentage_24h || 0;
+        const changeClass = change >= 0 ? 'positive' : 'negative';
+        const changeSymbol = change >= 0 ? '↑' : '↓';
+        
+        priceCard.innerHTML = `
+            <h3>${crypto.symbol.toUpperCase()}</h3>
+            <p>${crypto.name}</p>
+            <div class="price-value">$${crypto.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div class="price-change ${changeClass}">
+                ${changeSymbol} ${Math.abs(change).toFixed(2)}%
+            </div>
+        `;
+        
+        container.appendChild(priceCard);
+    });
+}
+
+function displayPricesFromBinance(data) {
+    const container = document.getElementById('pricesContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    // Binance داده‌های مختلفی برمی‌گرداند، این یک نمونه ساده است
+    const symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'ADAUSDT', 'XRPUSDT', 'SOLUSDT'];
+    
+    symbols.forEach(symbol => {
+        const cryptoData = data.find(item => item.symbol === symbol);
+        if (cryptoData) {
+            const priceCard = document.createElement('div');
+            priceCard.className = 'price-card';
+            
+            const change = parseFloat(cryptoData.priceChangePercent) || 0;
+            const changeClass = change >= 0 ? 'positive' : 'negative';
+            const changeSymbol = change >= 0 ? '↑' : '↓';
+            const symbolName = symbol.replace('USDT', '');
+            
+            priceCard.innerHTML = `
+                <h3>${symbolName}</h3>
+                <p>${getCryptoName(symbolName)}</p>
+                <div class="price-value">$${parseFloat(cryptoData.lastPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                <div class="price-change ${changeClass}">
+                    ${changeSymbol} ${Math.abs(change).toFixed(2)}%
+                </div>
+            `;
+            
+            container.appendChild(priceCard);
+        }
+    });
+}
+
+function getCryptoName(symbol) {
+    const names = {
+        'BTC': 'Bitcoin',
+        'ETH': 'Ethereum',
+        'BNB': 'Binance Coin',
+        'ADA': 'Cardano',
+        'XRP': 'Ripple',
+        'SOL': 'Solana',
+        'DOT': 'Polkadot'
+    };
+    return names[symbol] || symbol;
+}
+
+// استفاده از داده‌های mock در صورت خطا
 function useMockData() {
-    // داده‌های mock برای زمانی که API در دسترس نیست
     const mockPrices = [
         { symbol: 'BTC', name: 'Bitcoin', price: 43456.78, change: 2.34 },
         { symbol: 'ETH', name: 'Ethereum', price: 2345.67, change: 1.56 },
@@ -57,92 +146,23 @@ function displayPrices(prices) {
     
     container.innerHTML = '';
     
-    // فیلتر کردن فقط ارزهای مورد نظر
-    const filteredPrices = prices.filter(crypto => 
-        CRYPTO_SYMBOLS.includes(crypto.symbol)
-    );
-    
-    filteredPrices.forEach(crypto => {
+    prices.forEach(crypto => {
         const priceCard = document.createElement('div');
         priceCard.className = 'price-card';
         
-        const change = crypto.quote?.USD?.percent_change_24h || crypto.change;
-        const price = crypto.quote?.USD?.price || crypto.price;
-        const symbol = crypto.symbol;
-        const name = crypto.name;
-        
-        const changeClass = change >= 0 ? 'positive' : 'negative';
-        const changeSymbol = change >= 0 ? '↑' : '↓';
+        const changeClass = crypto.change >= 0 ? 'positive' : 'negative';
+        const changeSymbol = crypto.change >= 0 ? '↑' : '↓';
         
         priceCard.innerHTML = `
-            <h3>${symbol}</h3>
-            <p>${name}</p>
-            <div class="price-value">$${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <h3>${crypto.symbol}</h3>
+            <p>${crypto.name}</p>
+            <div class="price-value">$${crypto.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             <div class="price-change ${changeClass}">
-                ${changeSymbol} ${Math.abs(change).toFixed(2)}%
+                ${changeSymbol} ${Math.abs(crypto.change).toFixed(2)}%
             </div>
         `;
         
         container.appendChild(priceCard);
-    });
-}
-
-// جایگزین کردن fetchCryptoPrices در user.js برای بخش market
-async function fetchMarketPricesForUser() {
-    try {
-        const response = await fetch(CMC_API_URL, {
-            headers: {
-                'X-CMC_PRO_API_KEY': CMC_API_KEY,
-                'Accept': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        displayMarketPrices(data.data);
-
-    } catch (error) {
-        console.error('Error fetching market prices:', error);
-        useMockMarketData();
-    }
-}
-
-function useMockMarketData() {
-    const mockPrices = [
-        { symbol: 'BTC', name: 'Bitcoin', price: 43456.78, change: 2.34 },
-        { symbol: 'ETH', name: 'Ethereum', price: 2345.67, change: 1.56 },
-        { symbol: 'SOL', name: 'Solana', price: 98.76, change: 5.67 },
-        { symbol: 'ADA', name: 'Cardano', price: 0.4321, change: -1.45 },
-        { symbol: 'XRP', name: 'Ripple', price: 0.5678, change: 3.21 },
-        { symbol: 'DOT', name: 'Polkadot', price: 6.78, change: -2.34 }
-    ];
-    
-    displayMarketPrices(mockPrices);
-}
-
-function displayMarketPrices(prices) {
-    const container = document.getElementById('market-prices');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    prices.forEach(crypto => {
-        const changeClass = crypto.change >= 0 ? 'positive' : 'negative';
-        const changeSymbol = crypto.change >= 0 ? '↑' : '↓';
-        
-        const priceItem = document.createElement('div');
-        priceItem.className = 'price-item';
-        priceItem.innerHTML = `
-            <div class="price-symbol">${crypto.symbol}</div>
-            <div class="price-name">${crypto.name}</div>
-            <div class="price-value">$${crypto.price.toLocaleString()}</div>
-            <div class="price-change ${changeClass}">${changeSymbol} ${Math.abs(crypto.change)}%</div>
-        `;
-        
-        container.appendChild(priceItem);
     });
 }
 
@@ -153,10 +173,7 @@ setInterval(fetchCryptoPrices, 30000);
 document.addEventListener('DOMContentLoaded', function() {
     fetchCryptoPrices();
     
-    // اگر در صفحه کاربر هستیم، قیمت‌های مارکت را هم لود کنیم
     if (document.getElementById('market-prices')) {
-        fetchMarketPricesForUser();
-        setInterval(fetchMarketPricesForUser, 30000);
+        setInterval(fetchCryptoPrices, 30000);
     }
 });
-
