@@ -1,15 +1,11 @@
 /* Base Styles - Enhanced */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
 :root {
     --primary-gold: #d4af37;
     --gold-light: #f0e68c;
     --gold-dark: #b8941f;
+    --gold-darker: #8c6c1f;
     --bg-dark: #0a0a0a;
+    --bg-darker: #050505;
     --bg-card: #111;
     --bg-hover: #1a1a1a;
     --text-light: #ffffff;
@@ -18,98 +14,77 @@
     --error: #F44336;
     --warning: #FF9800;
     --info: #2196F3;
-    --glow-gold: 0 0 20px rgba(212, 175, 55, 0.4);
-    --glow-light: 0 0 30px rgba(212, 175, 55, 0.2);
+    --gradient-gold: linear-gradient(135deg, var(--primary-gold), var(--gold-dark));
+    --gradient-dark: linear-gradient(135deg, var(--bg-dark), var(--bg-darker));
+    --shadow-gold: 0 4px 20px rgba(212, 175, 55, 0.3);
+    --shadow-dark: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
 }
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #000000 100%);
+    background: var(--gradient-dark);
     color: var(--text-light);
     line-height: 1.7;
     min-height: 100vh;
     overflow-x: hidden;
 }
 
-/* Enhanced Particles Background */
-.particles-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    pointer-events: none;
-}
-
-.particle {
-    position: absolute;
-    background: var(--primary-gold);
-    border-radius: 50%;
-    opacity: 0.3;
-    animation: float 6s infinite ease-in-out;
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-20px) rotate(180deg); }
-}
-
-/* Enhanced Navigation with Glass Effect */
+/* Enhanced Navigation with Glass Morphism */
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.2rem 5%;
-    background: rgba(10, 10, 10, 0.85);
-    backdrop-filter: blur(20px);
-    border-bottom: 2px solid rgba(212, 175, 55, 0.6);
+    padding: 1rem 5%;
+    background: rgba(17, 17, 17, 0.85);
+    backdrop-filter: blur(15px);
+    border-bottom: 2px solid var(--primary-gold);
     position: sticky;
     top: 0;
     z-index: 1000;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-dark);
+    transition: all 0.3s ease;
 }
 
 .navbar.scrolled {
+    padding: 0.7rem 5%;
     background: rgba(10, 10, 10, 0.95);
-    padding: 0.8rem 5%;
-    box-shadow: 0 10px 40px rgba(212, 175, 55, 0.1);
 }
 
 .nav-brand h1 {
-    font-size: 2.8rem;
+    font-size: 2.2rem;
     font-weight: 800;
-    background: linear-gradient(45deg, var(--primary-gold), var(--gold-light), var(--gold-dark), var(--primary-gold));
+    background: var(--gradient-gold);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    background-size: 300% 300%;
-    animation: shimmer 8s ease infinite;
-    text-shadow: var(--glow-light);
-}
-
-@keyframes shimmer {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
+    letter-spacing: 1px;
 }
 
 .nav-menu {
     display: flex;
     align-items: center;
-    gap: 3rem;
+    gap: 2rem;
 }
 
 .nav-menu a {
     color: var(--text-light);
     text-decoration: none;
-    font-weight: 600;
-    padding: 0.8rem 1.5rem;
-    border-radius: 12px;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 500;
+    padding: 0.7rem 1.2rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
-    font-size: 1.1rem;
 }
 
 .nav-menu a::before {
@@ -119,32 +94,33 @@ body {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
-    transition: left 0.6s ease;
+    background: var(--gradient-gold);
+    transition: left 0.4s ease;
+    z-index: -1;
+    opacity: 0.1;
 }
 
 .nav-menu a:hover::before {
-    left: 100%;
+    left: 0;
 }
 
 .nav-menu a:hover {
     color: var(--primary-gold);
-    background: rgba(212, 175, 55, 0.1);
     transform: translateY(-2px);
-    box-shadow: var(--glow-light);
 }
 
-/* Enhanced Banner with Parallax */
+/* Enhanced Banner with Parallax Effect */
 .banner {
     background: 
-        radial-gradient(ellipse at center, rgba(212, 175, 55, 0.1) 0%, transparent 70%),
-        linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(26, 26, 26, 0.8) 100%),
+        linear-gradient(135deg, 
+            rgba(0, 0, 0, 0.85) 0%, 
+            rgba(26, 26, 26, 0.75) 100%),
         url('../assets/banner-bg.jpg') center/cover fixed;
-    padding: 10rem 2rem;
+    padding: 8rem 2rem;
     text-align: center;
     position: relative;
     overflow: hidden;
-    min-height: 100vh;
+    min-height: 80vh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -158,14 +134,18 @@ body {
     right: 0;
     bottom: 0;
     background: 
-        radial-gradient(circle at 20% 80%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
-    animation: pulse 8s ease-in-out infinite;
+        radial-gradient(circle at 20% 80%, 
+            rgba(212, 175, 55, 0.15) 0%, 
+            transparent 50%),
+        radial-gradient(circle at 80% 20%, 
+            rgba(212, 175, 55, 0.1) 0%, 
+            transparent 50%);
+    animation: float 6s ease-in-out infinite;
 }
 
-@keyframes pulse {
-    0%, 100% { opacity: 0.5; transform: scale(1); }
-    50% { opacity: 0.8; transform: scale(1.02); }
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
 }
 
 .banner-content {
@@ -173,13 +153,32 @@ body {
     z-index: 2;
     max-width: 900px;
     margin: 0 auto;
-    animation: slideUp 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.banner-content h2 {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 8px 32px rgba(212, 175, 55, 0.3);
+    line-height: 1.2;
+    animation: slideUp 1s ease;
+}
+
+.banner-content p {
+    font-size: 1.4rem;
+    margin-bottom: 2.5rem;
+    color: var(--text-muted);
+    line-height: 1.8;
+    animation: slideUp 1s ease 0.2s both;
 }
 
 @keyframes slideUp {
     from {
         opacity: 0;
-        transform: translateY(60px);
+        transform: translateY(30px);
     }
     to {
         opacity: 1;
@@ -187,45 +186,21 @@ body {
     }
 }
 
-.banner-content h2 {
-    font-size: 5rem;
-    margin-bottom: 2rem;
-    background: linear-gradient(45deg, var(--primary-gold), var(--gold-light), var(--gold-dark));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    line-height: 1.1;
-    font-weight: 800;
-}
-
-.banner-content p {
-    font-size: 1.6rem;
-    margin-bottom: 3rem;
-    color: var(--text-muted);
-    line-height: 1.8;
-    font-weight: 300;
-    animation: fadeIn 1s ease 0.3s both;
-}
-
-/* Enhanced CTA Button */
+/* Enhanced CTA Button with Hover Effects */
 .cta-button {
-    background: linear-gradient(135deg, var(--primary-gold), var(--gold-dark));
+    background: var(--gradient-gold);
     color: #000;
     border: none;
-    padding: 1.5rem 4rem;
-    font-size: 1.4rem;
+    padding: 1.3rem 3.5rem;
+    font-size: 1.2rem;
     font-weight: 700;
-    border-radius: 60px;
+    border-radius: 50px;
     cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 
-        0 8px 25px rgba(212, 175, 55, 0.4),
-        inset 0 2px 0 rgba(255, 255, 255, 0.2);
+    transition: all 0.4s ease;
+    box-shadow: var(--shadow-gold);
     position: relative;
     overflow: hidden;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+    animation: slideUp 1s ease 0.4s both;
 }
 
 .cta-button::before {
@@ -235,7 +210,10 @@ body {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.4), 
+        transparent);
     transition: left 0.6s ease;
 }
 
@@ -244,21 +222,20 @@ body {
 }
 
 .cta-button:hover {
-    transform: translateY(-6px) scale(1.05);
+    transform: translateY(-5px) scale(1.05);
     box-shadow: 
-        0 15px 40px rgba(212, 175, 55, 0.6),
-        inset 0 2px 0 rgba(255, 255, 255, 0.3);
-    background: linear-gradient(135deg, var(--gold-light), var(--primary-gold));
+        0 12px 40px rgba(212, 175, 55, 0.5),
+        0 0 0 4px rgba(212, 175, 55, 0.1);
 }
 
 .cta-button:active {
     transform: translateY(-2px) scale(1.02);
 }
 
-/* Enhanced Prices Section */
+/* Enhanced Prices Section with Grid Layout */
 .prices-section {
-    padding: 8rem 5%;
-    background: linear-gradient(180deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%);
+    padding: 6rem 5%;
+    background: var(--bg-dark);
     position: relative;
 }
 
@@ -268,14 +245,14 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--primary-gold), transparent);
+    height: 2px;
+    background: var(--gradient-gold);
 }
 
 .prices-section h2 {
     text-align: center;
-    margin-bottom: 5rem;
-    font-size: 3.5rem;
+    margin-bottom: 4rem;
+    font-size: 3rem;
     color: var(--text-light);
     position: relative;
     font-weight: 700;
@@ -285,33 +262,31 @@ body {
     content: '';
     display: block;
     width: 120px;
-    height: 6px;
-    background: linear-gradient(45deg, var(--primary-gold), var(--gold-light));
-    margin: 2rem auto;
-    border-radius: 3px;
-    box-shadow: var(--glow-light);
+    height: 4px;
+    background: var(--gradient-gold);
+    margin: 1.5rem auto;
+    border-radius: 2px;
+    box-shadow: var(--shadow-gold);
 }
 
 .prices-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 3rem;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2.5rem;
     max-width: 1400px;
     margin: 0 auto;
 }
 
 .price-card {
     background: linear-gradient(145deg, #111, #1a1a1a);
-    border: 1px solid rgba(212, 175, 55, 0.4);
-    border-radius: 24px;
-    padding: 3rem 2.5rem;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 20px;
+    padding: 2.5rem;
     text-align: center;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s ease;
     position: relative;
     overflow: hidden;
-    box-shadow: 
-        0 10px 40px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow-dark);
     backdrop-filter: blur(10px);
 }
 
@@ -322,7 +297,10 @@ body {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.1), transparent);
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(212, 175, 55, 0.1), 
+        transparent);
     transition: left 0.8s ease;
 }
 
@@ -331,59 +309,56 @@ body {
 }
 
 .price-card:hover {
-    transform: translateY(-15px) scale(1.03);
+    transform: translateY(-10px) scale(1.02);
     border-color: var(--primary-gold);
     box-shadow: 
-        0 25px 60px rgba(212, 175, 55, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        var(--shadow-dark),
+        0 15px 40px rgba(212, 175, 55, 0.3);
 }
 
 .price-card h3 {
-    font-size: 2rem;
-    margin-bottom: 1.5rem;
+    font-size: 1.8rem;
+    margin-bottom: 1.2rem;
     color: var(--primary-gold);
     font-weight: 700;
-    text-shadow: var(--glow-light);
 }
 
 .price-value {
-    font-size: 3rem;
+    font-size: 2.5rem;
     font-weight: 800;
     margin: 1.5rem 0;
     color: var(--text-light);
-    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .price-change {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
-    padding: 0.8rem 1.5rem;
+    padding: 0.5rem 1.2rem;
     border-radius: 25px;
     display: inline-block;
     transition: all 0.3s ease;
 }
 
 .price-change.positive {
-    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
+    background: rgba(76, 175, 80, 0.2);
     color: #4CAF50;
-    border: 1px solid rgba(76, 175, 80, 0.3);
-    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2);
+    border: 1px solid rgba(76, 175, 80, 0.4);
 }
 
 .price-change.negative {
-    background: linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(244, 67, 54, 0.1));
+    background: rgba(244, 67, 54, 0.2);
     color: #F44336;
-    border: 1px solid rgba(244, 67, 54, 0.3);
-    box-shadow: 0 4px 15px rgba(244, 67, 54, 0.2);
+    border: 1px solid rgba(244, 67, 54, 0.4);
 }
 
 /* Enhanced Footer */
 footer {
     background: linear-gradient(180deg, #111 0%, #000 100%);
-    padding: 4rem 5%;
+    padding: 4rem 5% 2rem;
     text-align: center;
     border-top: 1px solid rgba(212, 175, 55, 0.3);
-    margin-top: 6rem;
+    margin-top: 4rem;
     position: relative;
 }
 
@@ -394,76 +369,73 @@ footer::before {
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, var(--primary-gold), transparent);
+    background: var(--gradient-gold);
 }
 
 /* Enhanced Chat Widget */
 .chat-widget {
     position: fixed;
-    bottom: 40px;
-    right: 40px;
-    width: 420px;
+    bottom: 30px;
+    right: 30px;
+    width: 380px;
     background: linear-gradient(145deg, #111, #1a1a1a);
-    border: 1px solid rgba(212, 175, 55, 0.5);
-    border-radius: 24px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 20px;
     box-shadow: 
-        0 20px 60px rgba(212, 175, 55, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        var(--shadow-dark),
+        0 15px 40px rgba(212, 175, 55, 0.2);
     z-index: 1000;
     overflow: hidden;
-    transform: translateY(100px) scale(0.9);
+    transform: translateY(100px);
     opacity: 0;
-    animation: chatAppear 0.8s cubic-bezier(0.4, 0, 0.2, 1) 1.5s forwards;
-    backdrop-filter: blur(20px);
+    animation: chatSlideUp 0.5s ease 1s forwards;
 }
 
-@keyframes chatAppear {
+@keyframes chatSlideUp {
     to {
-        transform: translateY(0) scale(1);
+        transform: translateY(0);
         opacity: 1;
     }
 }
 
 .chat-header {
-    background: linear-gradient(135deg, var(--primary-gold), var(--gold-dark));
-    padding: 1.5rem 2rem;
+    background: var(--gradient-gold);
+    padding: 1.5rem;
     color: #000;
     font-weight: 700;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 1.3rem;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    font-size: 1.1rem;
 }
 
 .chat-body {
     display: flex;
     flex-direction: column;
-    height: 500px;
-    background: rgba(10, 10, 10, 0.5);
+    height: 450px;
 }
 
 .chat-messages {
     flex: 1;
-    padding: 2rem;
+    padding: 1.5rem;
     overflow-y: auto;
-    background: transparent;
+    background: rgba(0, 0, 0, 0.3);
 }
 
 .message {
-    margin-bottom: 1.5rem;
-    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.2rem;
+    padding: 1rem 1.2rem;
     border-radius: 18px;
     max-width: 85%;
-    animation: messageSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: messageSlideIn 0.3s ease;
     position: relative;
     backdrop-filter: blur(10px);
 }
 
-@keyframes messageSlide {
+@keyframes messageSlideIn {
     from {
         opacity: 0;
-        transform: translateY(20px) scale(0.9);
+        transform: translateY(15px) scale(0.95);
     }
     to {
         opacity: 1;
@@ -472,176 +444,112 @@ footer::before {
 }
 
 .message.user {
-    background: linear-gradient(135deg, var(--primary-gold), var(--gold-light));
+    background: var(--gradient-gold);
     color: #000;
     margin-left: auto;
-    border-bottom-right-radius: 6px;
-    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
+    border-bottom-right-radius: 5px;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
 }
 
 .message.support {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.1));
+    background: rgba(255, 255, 255, 0.1);
     color: var(--text-light);
-    border-bottom-left-radius: 6px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    border-bottom-left-radius: 5px;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .message.system {
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(212, 175, 55, 0.1));
+    background: rgba(212, 175, 55, 0.15);
     color: var(--primary-gold);
     font-style: italic;
     margin: 0 auto;
     text-align: center;
     max-width: 90%;
-    border-radius: 25px;
-    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 20px;
+    border: 1px solid rgba(212, 175, 55, 0.2);
 }
 
 .chat-input {
     display: flex;
-    padding: 1.5rem 2rem;
-    background: rgba(17, 17, 17, 0.8);
+    padding: 1.2rem;
+    background: rgba(17, 17, 17, 0.9);
     border-top: 1px solid rgba(51, 51, 51, 0.5);
-    backdrop-filter: blur(20px);
 }
 
 .chat-input input {
     flex: 1;
-    background: rgba(255, 255, 255, 0.08);
-    border: 2px solid rgba(212, 175, 55, 0.4);
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(212, 175, 55, 0.3);
     color: var(--text-light);
-    padding: 1.2rem 1.5rem;
-    border-radius: 15px;
+    padding: 1rem 1.2rem;
+    border-radius: 12px;
     margin-right: 1rem;
     transition: all 0.3s ease;
-    font-size: 1.1rem;
-    backdrop-filter: blur(10px);
+    font-size: 1rem;
 }
 
 .chat-input input:focus {
     outline: none;
     border-color: var(--primary-gold);
-    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
-    background: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.chat-input input::placeholder {
+    color: var(--text-muted);
 }
 
 .chat-input button {
-    background: linear-gradient(135deg, var(--primary-gold), var(--gold-dark));
+    background: var(--gradient-gold);
     color: #000;
     border: none;
-    padding: 1.2rem 2rem;
-    border-radius: 15px;
+    padding: 1rem 1.8rem;
+    border-radius: 12px;
     cursor: pointer;
     font-weight: 700;
     transition: all 0.3s ease;
-    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
+    min-width: 80px;
 }
 
 .chat-input button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4);
-    background: linear-gradient(135deg, var(--gold-light), var(--primary-gold));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
 }
 
-/* Enhanced Scrollbar */
-::-webkit-scrollbar {
-    width: 10px;
+/* Loading Animation */
+.loading-spinner {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--primary-gold);
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 12px;
 }
 
-::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, var(--primary-gold), var(--gold-light));
-    border-radius: 5px;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, var(--gold-light), var(--primary-gold));
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 /* Enhanced Responsive Design */
-@media (max-width: 1440px) {
-    .banner-content h2 {
-        font-size: 4.5rem;
-    }
-    
-    .prices-grid {
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 2.5rem;
-    }
-}
-
 @media (max-width: 1200px) {
-    .banner-content h2 {
-        font-size: 4rem;
-    }
-    
-    .banner-content p {
-        font-size: 1.4rem;
-    }
-    
     .prices-grid {
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 2rem;
-        padding: 0 3rem;
-    }
-    
-    .nav-menu {
-        gap: 2rem;
-    }
-}
-
-@media (max-width: 992px) {
-    .navbar {
-        padding: 1rem 3%;
-    }
-    
-    .nav-brand h1 {
-        font-size: 2.4rem;
-    }
-    
-    .banner {
-        padding: 8rem 1.5rem;
-    }
-    
-    .banner-content h2 {
-        font-size: 3.5rem;
-    }
-    
-    .banner-content p {
-        font-size: 1.3rem;
-    }
-    
-    .prices-section {
-        padding: 6rem 3%;
-    }
-    
-    .prices-grid {
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        padding: 0 2rem;
     }
 }
 
 @media (max-width: 768px) {
     .navbar {
         flex-direction: column;
-        padding: 1.5rem;
-        gap: 1.5rem;
-        background: rgba(10, 10, 10, 0.95);
-    }
-    
-    .nav-brand h1 {
-        font-size: 2.2rem;
+        padding: 1rem;
+        gap: 1rem;
     }
     
     .nav-menu {
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.5rem;
         width: 100%;
     }
     
@@ -653,7 +561,7 @@ footer::before {
     
     .banner {
         padding: 6rem 1rem;
-        min-height: 80vh;
+        min-height: 70vh;
     }
     
     .banner-content h2 {
@@ -661,163 +569,45 @@ footer::before {
     }
     
     .banner-content p {
-        font-size: 1.2rem;
-        margin-bottom: 2.5rem;
-    }
-    
-    .cta-button {
-        padding: 1.3rem 3rem;
         font-size: 1.2rem;
     }
     
     .prices-section {
-        padding: 4rem 2%;
-    }
-    
-    .prices-section h2 {
-        font-size: 2.8rem;
-        margin-bottom: 3rem;
+        padding: 4rem 1rem;
     }
     
     .prices-grid {
         grid-template-columns: 1fr;
-        gap: 2rem;
-        padding: 0 1rem;
+        gap: 1.5rem;
     }
     
     .price-card {
-        padding: 2.5rem 2rem;
-    }
-    
-    .price-card h3 {
-        font-size: 1.8rem;
-    }
-    
-    .price-value {
-        font-size: 2.5rem;
+        padding: 2rem;
     }
     
     .chat-widget {
-        width: calc(100% - 3rem);
-        right: 1.5rem;
-        bottom: 1.5rem;
-    }
-    
-    .chat-header {
-        padding: 1.2rem 1.5rem;
-        font-size: 1.2rem;
-    }
-    
-    .chat-body {
-        height: 400px;
-    }
-    
-    .chat-messages {
-        padding: 1.5rem;
-    }
-    
-    .chat-input {
-        padding: 1.2rem 1.5rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .banner-content h2 {
-        font-size: 2.2rem;
-    }
-    
-    .banner-content p {
-        font-size: 1.1rem;
+        width: 95%;
+        right: 2.5%;
+        bottom: 20px;
     }
     
     .cta-button {
         padding: 1.2rem 2.5rem;
         font-size: 1.1rem;
-        width: 100%;
-        max-width: 300px;
-    }
-    
-    .prices-section h2 {
-        font-size: 2.2rem;
-    }
-    
-    .price-card {
-        padding: 2rem 1.5rem;
-        border-radius: 20px;
-    }
-    
-    .price-card h3 {
-        font-size: 1.6rem;
-    }
-    
-    .price-value {
-        font-size: 2.2rem;
-    }
-    
-    .price-change {
-        font-size: 1.1rem;
-        padding: 0.6rem 1.2rem;
-    }
-    
-    .chat-widget {
-        width: calc(100% - 2rem);
-        right: 1rem;
-        bottom: 1rem;
-        border-radius: 20px;
-    }
-    
-    .chat-header {
-        padding: 1rem 1.2rem;
-        font-size: 1.1rem;
-    }
-    
-    .chat-body {
-        height: 350px;
-    }
-    
-    .chat-messages {
-        padding: 1.2rem;
-    }
-    
-    .message {
-        padding: 1rem 1.2rem;
-        margin-bottom: 1.2rem;
-    }
-    
-    .chat-input {
-        padding: 1rem 1.2rem;
-    }
-    
-    .chat-input input {
-        padding: 1rem 1.2rem;
-        font-size: 1rem;
-    }
-    
-    .chat-input button {
-        padding: 1rem 1.5rem;
-        font-size: 1rem;
     }
 }
 
-@media (max-width: 400px) {
+@media (max-width: 480px) {
     .banner-content h2 {
-        font-size: 1.8rem;
+        font-size: 2.2rem;
     }
     
     .banner-content p {
-        font-size: 1rem;
-    }
-    
-    .prices-section h2 {
-        font-size: 1.8rem;
+        font-size: 1.1rem;
     }
     
     .price-card {
-        padding: 1.8rem 1.2rem;
-    }
-    
-    .price-card h3 {
-        font-size: 1.4rem;
+        padding: 1.5rem;
     }
     
     .price-value {
@@ -825,17 +615,24 @@ footer::before {
     }
 }
 
-/* Dark mode support */
+/* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
     :root {
-        --bg-dark: #0a0a0a;
-        --bg-card: #111;
-        --text-light: #ffffff;
-        --text-muted: #aaaaaa;
+        --bg-dark: #050505;
+        --bg-card: #0a0a0a;
     }
 }
 
-/* Reduced motion support */
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    :root {
+        --primary-gold: #ffd700;
+        --text-light: #ffffff;
+        --text-muted: #cccccc;
+    }
+}
+
+/* Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
     * {
         animation-duration: 0.01ms !important;
@@ -844,20 +641,32 @@ footer::before {
     }
 }
 
-/* High contrast support */
-@media (prefers-contrast: high) {
-    :root {
-        --primary-gold: #ffd700;
-        --gold-light: #ffff00;
-        --text-light: #ffffff;
-        --text-muted: #cccccc;
-    }
-    
-    .price-card {
-        border-width: 2px;
-    }
-    
-    .nav-menu a:hover {
-        background: rgba(212, 175, 55, 0.3);
-    }
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--gradient-gold);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, var(--gold-light), var(--primary-gold));
+}
+
+/* Selection Styling */
+::selection {
+    background: rgba(212, 175, 55, 0.3);
+    color: var(--text-light);
+}
+
+::-moz-selection {
+    background: rgba(212, 175, 55, 0.3);
+    color: var(--text-light);
 }
