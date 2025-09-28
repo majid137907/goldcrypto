@@ -1,5 +1,6 @@
-// coinmarketcap.js - نسخه کامل با API واقعی
-const CMC_API_KEY = '630809ef-2b4a-4405-8abd-2cf8f4916b39'; // کلید API خود را اینجا قرار دهید
+// coinmarketcap.js - نسخه اصلاح شده با Proxy
+const CMC_API_KEY = '630809ef-2b4a-4405-8abd-2cf8f4916b39';
+const PROXY_URL = 'https://cors-anywhere.herokuapp.com/'; // یا یک پروکسی دیگر
 const CMC_API_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
 
 // لیست ارزهای مورد نظر
@@ -7,8 +8,10 @@ const CRYPTO_SYMBOLS = ['BTC', 'ETH', 'USDT', 'BNB', 'XRP', 'ADA', 'SOL', 'DOT']
 
 async function fetchCryptoPrices() {
     try {
-        // استفاده از API واقعی CoinMarketCap
-        const response = await fetch(CMC_API_URL, {
+        console.log('Fetching prices from CoinMarketCap...');
+        
+        // استفاده از Proxy برای دور زدن CORS
+        const response = await fetch(PROXY_URL + CMC_API_URL, {
             headers: {
                 'X-CMC_PRO_API_KEY': CMC_API_KEY,
                 'Accept': 'application/json'
@@ -20,15 +23,17 @@ async function fetchCryptoPrices() {
         }
 
         const data = await response.json();
+        console.log('CoinMarketCap data:', data);
         displayPrices(data.data);
 
     } catch (error) {
         console.error('Error fetching prices from CoinMarketCap:', error);
-        // در صورت خطا از داده‌های mock استفاده کنیم
         console.log('Using mock data as fallback...');
         useMockData();
     }
 }
+
+// بقیه کدها بدون تغییر...
 
 function useMockData() {
     // داده‌های mock برای زمانی که API در دسترس نیست
@@ -154,3 +159,4 @@ document.addEventListener('DOMContentLoaded', function() {
         setInterval(fetchMarketPricesForUser, 30000);
     }
 });
+
