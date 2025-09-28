@@ -1,27 +1,23 @@
-// User Dashboard JavaScript
+// user.js - نسخه بازنویسی شده
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize the user dashboard
     initUserDashboard();
 });
 
 let priceChart = null;
 let userData = null;
+let userChatSubscription = null;
 
 async function initUserDashboard() {
-    // Check if user is logged in
     await checkUserAuth();
-    
-    // Set up event listeners
     setupEventListeners();
-    
-    // Load initial data
     loadUserData();
     loadMarketPrices();
     loadWalletAddresses();
     loadTransactionHistory();
     loadOpenTrades();
+    loadChatHistory();
+    setupUserChatSubscription();
     
-    // Set up real-time price updates
     setInterval(loadMarketPrices, 30000);
 }
 
@@ -33,13 +29,11 @@ async function checkUserAuth() {
         return;
     }
     
-    // Redirect to admin panel if user is admin
     if (userData.level === 'admin') {
         window.location.href = 'admin.html';
         return;
     }
     
-    // Update UI with user data
     document.getElementById('user-balance').textContent = `$${userData.balance?.toFixed(2) || '0.00'}`;
     document.getElementById('user-level').textContent = userData.level.charAt(0).toUpperCase() + userData.level.slice(1);
     document.getElementById('user-level').className = `level-${userData.level}`;
@@ -83,25 +77,19 @@ function setupEventListeners() {
     // Logout button
     document.getElementById('logout-btn').addEventListener('click', logout);
     
-    // Trade symbol change
+    // Trade functionality
     document.getElementById('trade-symbol').addEventListener('change', updateTradeChart);
-    
-    // Trade type change
     document.getElementById('trade-type').addEventListener('change', function() {
         const tradeBtn = document.getElementById('execute-trade');
         tradeBtn.textContent = this.value === 'buy' ? 'Buy' : 'Sell';
         tradeBtn.className = `trade-btn ${this.value}`;
     });
-    
-    // Execute trade
     document.getElementById('execute-trade').addEventListener('click', executeTrade);
     
-    // Deposit method change
+    // Deposit functionality
     document.querySelectorAll('input[name="deposit-method"]').forEach(radio => {
         radio.addEventListener('change', loadWalletAddresses);
     });
-    
-    // Copy address button
     document.getElementById('copy-address').addEventListener('click', copyDepositAddress);
     
     // Withdrawal form
@@ -120,13 +108,12 @@ function setupEventListeners() {
     // Chat functionality
     setupChatWidget();
     
-    // Email verification handling
+    // Email verification
     document.getElementById('verify-code').addEventListener('click', verifyWithdrawalCode);
     document.getElementById('resend-code').addEventListener('click', resendVerificationCode);
 }
 
 function showSection(section) {
-    // Update active sidebar link
     document.querySelectorAll('.sidebar-link').forEach(link => {
         link.classList.remove('active');
         if (link.getAttribute('data-section') === section) {
@@ -134,13 +121,15 @@ function showSection(section) {
         }
     });
     
-    // Show corresponding section
     document.querySelectorAll('.content-section').forEach(sectionEl => {
         sectionEl.classList.remove('active');
     });
-    document.getElementById(`${section}-section`).classList.add('active');
     
-    // Load section-specific data
+    const targetSection = document.getElementById(`${section}-section`);
+    if (targetSection) {
+        targetSection.classList.add('active');
+    }
+    
     if (section === 'trade') {
         updateTradeChart();
     } else if (section === 'wallet') {
@@ -151,7 +140,6 @@ function showSection(section) {
 function showModal(modalId) {
     document.getElementById(modalId).style.display = 'block';
     
-    // Load modal-specific content
     if (modalId === 'deposit-modal') {
         loadDepositModal();
     } else if (modalId === 'withdrawal-modal') {
@@ -163,7 +151,6 @@ function showModal(modalId) {
 
 async function loadUserData() {
     try {
-        // Get updated user data from Supabase
         const { data, error } = await supabase
             .from('profiles')
             .select('*')
@@ -172,16 +159,13 @@ async function loadUserData() {
             
         if (error) throw error;
         
-        // Update user data
         userData = { ...userData, ...data };
         localStorage.setItem('goldcrypto-user', JSON.stringify(userData));
         
-        // Update UI
         document.getElementById('user-balance').textContent = `$${userData.balance?.toFixed(2) || '0.00'}`;
         document.getElementById('user-level').textContent = userData.level.charAt(0).toUpperCase() + userData.level.slice(1);
         document.getElementById('user-level').className = `level-${userData.level}`;
         
-        // Update form max values
         document.getElementById('withdraw-amount').max = userData.balance || 0;
         document.getElementById('transfer-amount').max = userData.balance || 0;
         
@@ -192,46 +176,54 @@ async function loadUserData() {
 
 async function loadMarketPrices() {
     try {
-        // Mock data for demonstration
-        const mockPrices = [
-            { symbol: 'BTC', name: 'Bitcoin', price: 43456.78, change: 2.34 },
-            { symbol: 'ETH', name: 'Ethereum', price: 2345.67, change: 1.56 },
-            { symbol: 'SOL', name: 'Solana', price: 98.76, change: 5.67 },
-            { symbol: 'ADA', name: 'Cardano', price: 0.4321, change: -1.45 },
-            { symbol: 'XRP', name: 'Ripple', price: 0.5678, change: 3.21 },
-            { symbol: 'DOT', name: 'Polkadot', price: 6.78, change: -2.34 }
-        ];
-        
-        const pricesContainer = document.getElementById('market-prices');
-        pricesContainer.innerHTML = '';
-        
-        mockPrices.forEach(crypto => {
-            const changeClass = crypto.change >= 0 ? 'positive' : 'negative';
-            const changeSymbol = crypto.change >= 0 ? '↑' : '↓';
-            
-            const priceItem = document.createElement('div');
-            priceItem.className = 'price-item';
-            priceItem.innerHTML = `
-                <div class="price-symbol">${crypto.symbol}</div>
-                <div class="price-name">${crypto.name}</div>
-                <div class="price-value">$${crypto.price.toLocaleString()}</div>
-                <div class="price-change ${changeClass}">${changeSymbol} ${Math.abs(crypto.change)}%</div>
-            `;
-            
-            pricesContainer.appendChild(priceItem);
-        });
-        
+        // استفاده از coinmarketcap.js برای دریافت قیمت‌ها
+        if (typeof fetchCryptoPrices === 'function') {
+            fetchCryptoPrices();
+        } else {
+            // Fallback to mock data
+            useMockMarketData();
+        }
     } catch (error) {
         console.error('Error loading market prices:', error);
+        useMockMarketData();
     }
 }
 
-// در تابع loadWalletAddresses اصلاحات زیر را اعمال کنید
+function useMockMarketData() {
+    const mockPrices = [
+        { symbol: 'BTC', name: 'Bitcoin', price: 43456.78, change: 2.34 },
+        { symbol: 'ETH', name: 'Ethereum', price: 2345.67, change: 1.56 },
+        { symbol: 'SOL', name: 'Solana', price: 98.76, change: 5.67 },
+        { symbol: 'ADA', name: 'Cardano', price: 0.4321, change: -1.45 },
+        { symbol: 'XRP', name: 'Ripple', price: 0.5678, change: 3.21 },
+        { symbol: 'DOT', name: 'Polkadot', price: 6.78, change: -2.34 }
+    ];
+    
+    const pricesContainer = document.getElementById('market-prices');
+    if (!pricesContainer) return;
+    
+    pricesContainer.innerHTML = '';
+    
+    mockPrices.forEach(crypto => {
+        const changeClass = crypto.change >= 0 ? 'positive' : 'negative';
+        const changeSymbol = crypto.change >= 0 ? '↑' : '↓';
+        
+        const priceItem = document.createElement('div');
+        priceItem.className = 'price-item';
+        priceItem.innerHTML = `
+            <div class="price-symbol">${crypto.symbol}</div>
+            <div class="price-name">${crypto.name}</div>
+            <div class="price-value">$${crypto.price.toLocaleString()}</div>
+            <div class="price-change ${changeClass}">${changeSymbol} ${Math.abs(crypto.change)}%</div>
+        `;
+        
+        pricesContainer.appendChild(priceItem);
+    });
+}
+
 async function loadWalletAddresses() {
     try {
         const selectedMethod = document.querySelector('input[name="deposit-method"]:checked').value;
-        
-        // استفاده از آدرس‌های ثابت به جای خواندن از دیتابیس
         let walletAddress = '';
         
         if (selectedMethod === 'trc20') {
@@ -244,7 +236,7 @@ async function loadWalletAddresses() {
         
     } catch (error) {
         console.error('Error loading wallet addresses:', error);
-        // استفاده از آدرس‌های پیش‌فرض در صورت خطا
+        // Fallback to default addresses
         const selectedMethod = document.querySelector('input[name="deposit-method"]:checked').value;
         let defaultAddress = '';
         
@@ -257,6 +249,7 @@ async function loadWalletAddresses() {
         document.getElementById('deposit-address').textContent = defaultAddress;
     }
 }
+
 function copyDepositAddress() {
     const address = document.getElementById('deposit-address').textContent;
     if (address && !address.includes('Error') && !address.includes('not configured')) {
@@ -272,7 +265,6 @@ async function loadTransactionHistory() {
     try {
         const filter = document.getElementById('history-type').value;
         
-        // Get transactions from Supabase
         const { data, error } = await supabase
             .from('transactions')
             .select('*')
@@ -286,7 +278,6 @@ async function loadTransactionHistory() {
         
         let transactions = data || [];
         
-        // Apply filter if not "all"
         if (filter !== 'all') {
             transactions = transactions.filter(t => t.type === filter);
         }
@@ -324,7 +315,6 @@ async function loadTransactionHistory() {
 
 async function loadOpenTrades() {
     try {
-        // Get open trades from Supabase
         const { data, error } = await supabase
             .from('trades')
             .select('*')
@@ -366,7 +356,6 @@ async function loadOpenTrades() {
             tradesContainer.appendChild(tradeItem);
         });
         
-        // Add event listeners to close trade buttons
         document.querySelectorAll('.close-trade').forEach(button => {
             button.addEventListener('click', function() {
                 const tradeId = this.getAttribute('data-trade-id');
@@ -380,7 +369,6 @@ async function loadOpenTrades() {
 }
 
 function getCurrentPrice(symbol) {
-    // Mock function to get current price
     const prices = {
         'BTC': 43456.78,
         'ETH': 2345.67,
@@ -396,24 +384,20 @@ function updateTradeChart() {
     const symbol = document.getElementById('trade-symbol').value;
     const currentPrice = getCurrentPrice(symbol);
     
-    // Update entry price field
     document.getElementById('entry-price').value = currentPrice.toFixed(2);
     
-    // Create or update chart
     const ctx = document.getElementById('price-chart').getContext('2d');
     
     if (priceChart) {
         priceChart.destroy();
     }
     
-    // Generate mock price data
     const labels = [];
     const data = [];
     let price = currentPrice;
     
     for (let i = 24; i >= 0; i--) {
         labels.push(`${i}h`);
-        // Random price movement
         price = price * (1 + (Math.random() - 0.5) * 0.02);
         data.push(price);
     }
@@ -476,7 +460,6 @@ async function executeTrade() {
         const leverage = parseInt(document.getElementById('trade-leverage').value);
         const price = parseFloat(document.getElementById('entry-price').value);
         
-        // Validate inputs
         if (amount < 10) {
             alert('Minimum trade amount is $10');
             return;
@@ -487,7 +470,6 @@ async function executeTrade() {
             return;
         }
         
-        // Create trade in Supabase
         const { data, error } = await supabase
             .from('trades')
             .insert([
@@ -506,7 +488,6 @@ async function executeTrade() {
             
         if (error) throw error;
         
-        // Update user balance (deduct margin)
         const margin = amount * leverage;
         const newBalance = userData.balance - margin;
         
@@ -517,7 +498,6 @@ async function executeTrade() {
             
         if (updateError) throw updateError;
         
-        // Update UI
         userData.balance = newBalance;
         localStorage.setItem('goldcrypto-user', JSON.stringify(userData));
         document.getElementById('user-balance').textContent = `$${newBalance.toFixed(2)}`;
@@ -533,7 +513,6 @@ async function executeTrade() {
 
 async function closeTrade(tradeId) {
     try {
-        // Get trade details
         const { data: trade, error: tradeError } = await supabase
             .from('trades')
             .select('*')
@@ -542,7 +521,6 @@ async function closeTrade(tradeId) {
             
         if (tradeError) throw tradeError;
         
-        // Calculate P&L
         const currentPrice = getCurrentPrice(trade.symbol);
         let pnl = 0;
         
@@ -552,7 +530,6 @@ async function closeTrade(tradeId) {
             pnl = (trade.price - currentPrice) * trade.amount * trade.leverage;
         }
         
-        // Update trade status
         const { error: updateError } = await supabase
             .from('trades')
             .update({ 
@@ -563,7 +540,6 @@ async function closeTrade(tradeId) {
             
         if (updateError) throw updateError;
         
-        // Update user balance
         const margin = trade.amount * trade.leverage;
         const newBalance = userData.balance + margin + pnl;
         
@@ -574,7 +550,6 @@ async function closeTrade(tradeId) {
             
         if (balanceError) throw balanceError;
         
-        // Record transaction
         const { error: transactionError } = await supabase
             .from('transactions')
             .insert([
@@ -595,7 +570,6 @@ async function closeTrade(tradeId) {
             
         if (transactionError) throw transactionError;
         
-        // Update UI
         userData.balance = newBalance;
         localStorage.setItem('goldcrypto-user', JSON.stringify(userData));
         document.getElementById('user-balance').textContent = `$${newBalance.toFixed(2)}`;
@@ -618,7 +592,6 @@ async function handleWithdrawal(e) {
         const address = document.getElementById('withdraw-address').value;
         const method = document.getElementById('withdraw-method').value;
         
-        // Validate inputs
         if (amount < 10) {
             showMessage('withdrawal-message', 'Minimum withdrawal amount is $10', 'error');
             return;
@@ -634,11 +607,9 @@ async function handleWithdrawal(e) {
             return;
         }
         
-        // Show email verification modal
         document.getElementById('withdrawal-modal').style.display = 'none';
         document.getElementById('email-modal').style.display = 'block';
         
-        // Store withdrawal details for after verification
         window.pendingWithdrawal = { amount, address, method };
         
     } catch (error) {
@@ -654,7 +625,6 @@ async function handleTransfer(e) {
         const recipientEmail = document.getElementById('recipient-email').value;
         const amount = parseFloat(document.getElementById('transfer-amount').value);
         
-        // Validate inputs
         if (amount < 1) {
             showMessage('transfer-message', 'Minimum transfer amount is $1', 'error');
             return;
@@ -670,7 +640,6 @@ async function handleTransfer(e) {
             return;
         }
         
-        // Check if recipient exists and has premium level
         const { data: recipient, error: recipientError } = await supabase
             .from('profiles')
             .select('id, level, balance')
@@ -687,16 +656,13 @@ async function handleTransfer(e) {
             return;
         }
         
-        // Check if user has premium level
         if (userData.level !== 'premium') {
             showMessage('transfer-message', 'You must have a premium account for internal transfers', 'error');
             return;
         }
         
-        // Execute transfer
         const newBalance = userData.balance - amount;
         
-        // Update sender balance
         const { error: senderError } = await supabase
             .from('profiles')
             .update({ balance: newBalance })
@@ -704,7 +670,6 @@ async function handleTransfer(e) {
             
         if (senderError) throw senderError;
         
-        // Update recipient balance
         const { error: recipientUpdateError } = await supabase
             .from('profiles')
             .update({ balance: (recipient.balance || 0) + amount })
@@ -712,7 +677,6 @@ async function handleTransfer(e) {
             
         if (recipientUpdateError) throw recipientUpdateError;
         
-        // Record transaction for sender
         const { error: transactionError } = await supabase
             .from('transactions')
             .insert([
@@ -731,7 +695,6 @@ async function handleTransfer(e) {
             
         if (transactionError) throw transactionError;
         
-        // Record transaction for recipient
         const { error: recipientTransactionError } = await supabase
             .from('transactions')
             .insert([
@@ -750,7 +713,6 @@ async function handleTransfer(e) {
             
         if (recipientTransactionError) throw recipientTransactionError;
         
-        // Update UI
         userData.balance = newBalance;
         localStorage.setItem('goldcrypto-user', JSON.stringify(userData));
         document.getElementById('user-balance').textContent = `$${newBalance.toFixed(2)}`;
@@ -771,7 +733,6 @@ async function updatePersonalInfo(e) {
     try {
         const name = document.getElementById('user-name').value;
         
-        // Update user profile in Supabase
         const { error } = await supabase
             .from('profiles')
             .update({ 
@@ -782,7 +743,6 @@ async function updatePersonalInfo(e) {
             
         if (error) throw error;
         
-        // Update local storage
         userData.full_name = name;
         localStorage.setItem('goldcrypto-user', JSON.stringify(userData));
         
@@ -802,7 +762,6 @@ async function changePassword(e) {
         const newPassword = document.getElementById('new-password').value;
         const confirmPassword = document.getElementById('confirm-password').value;
         
-        // Validate inputs
         if (newPassword !== confirmPassword) {
             showMessage('password-message', 'New passwords do not match', 'error');
             return;
@@ -813,7 +772,6 @@ async function changePassword(e) {
             return;
         }
         
-        // Update password in Supabase
         const { error } = await supabase.auth.updateUser({
             password: newPassword
         });
@@ -911,57 +869,124 @@ function loadTransferModal() {
         const recipientEmail = document.getElementById('modal-recipient-email').value;
         const amount = parseFloat(document.getElementById('modal-transfer-amount').value);
         
-        // Simulate transfer (in a real app, this would be handled by the main transfer function)
         alert(`Transfer of $${amount} to ${recipientEmail} would be processed.`);
         document.getElementById('transfer-modal').style.display = 'none';
     });
 }
 
+// سیستم چت بازنویسی شده
 function setupChatWidget() {
     const chatToggle = document.querySelector('.chat-toggle');
     const chatBody = document.querySelector('.chat-body');
     const chatInput = document.getElementById('chatInput');
     const sendButton = document.getElementById('sendMessage');
     
-    // Toggle chat visibility
     chatToggle.addEventListener('click', function() {
-        if (chatBody.style.display === 'none') {
+        if (chatBody.style.display === 'none' || chatBody.style.display === '') {
             chatBody.style.display = 'flex';
             chatToggle.textContent = '-';
+            loadChatHistory();
         } else {
             chatBody.style.display = 'none';
             chatToggle.textContent = '+';
         }
     });
     
-    // Send message functionality
     sendButton.addEventListener('click', sendMessage);
     chatInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') sendMessage();
     });
 }
 
-// تابع sendMessage را اصلاح کنید
+async function loadChatHistory() {
+    try {
+        const { data: messages, error } = await supabase
+            .from('chat_messages')
+            .select('*')
+            .eq('user_id', userData.id)
+            .order('created_at', { ascending: true });
+            
+        if (error) throw error;
+        
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.innerHTML = '';
+        
+        if (!messages || messages.length === 0) {
+            const systemMessage = document.createElement('div');
+            systemMessage.className = 'message system';
+            systemMessage.textContent = 'Welcome to GoldCrypto support. How can we help you?';
+            chatMessages.appendChild(systemMessage);
+            return;
+        }
+        
+        messages.forEach(message => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${message.is_admin ? 'support' : 'user'}`;
+            messageDiv.textContent = message.message;
+            chatMessages.appendChild(messageDiv);
+        });
+        
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+    } catch (error) {
+        console.error('Error loading chat history:', error);
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.innerHTML = '';
+        const systemMessage = document.createElement('div');
+        systemMessage.className = 'message system';
+        systemMessage.textContent = 'Welcome to GoldCrypto support. How can we help you?';
+        chatMessages.appendChild(systemMessage);
+    }
+}
+
+function setupUserChatSubscription() {
+    if (userChatSubscription) {
+        userChatSubscription.unsubscribe();
+    }
+    
+    userChatSubscription = supabase
+        .channel(`user-chat:${userData.id}`)
+        .on('postgres_changes', 
+            { 
+                event: 'INSERT', 
+                schema: 'public', 
+                table: 'chat_messages',
+                filter: `user_id=eq.${userData.id}`
+            }, 
+            (payload) => {
+                const newMessage = payload.new;
+                const chatMessages = document.getElementById('chatMessages');
+                
+                if (newMessage.is_admin) {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'message support';
+                    messageDiv.textContent = newMessage.message;
+                    chatMessages.appendChild(messageDiv);
+                    
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            }
+        )
+        .subscribe((status) => {
+            console.log('User chat subscription status:', status);
+        });
+}
+
 async function sendMessage() {
     const chatInput = document.getElementById('chatInput');
     const chatMessages = document.getElementById('chatMessages');
     const message = chatInput.value.trim();
     
     if (message) {
-        // Add user message to chat
         const userMessage = document.createElement('div');
         userMessage.className = 'message user';
         userMessage.textContent = message;
         chatMessages.appendChild(userMessage);
         
-        // Clear input
         chatInput.value = '';
-        
-        // Scroll to bottom
         chatMessages.scrollTop = chatMessages.scrollHeight;
         
         try {
-            // Save message to Supabase
             const { error } = await supabase
                 .from('chat_messages')
                 .insert([
@@ -976,47 +1001,32 @@ async function sendMessage() {
                 
             if (error) throw error;
             
-            // نمایش پیام موفقیت
-            console.log('Message sent to support');
-            
         } catch (error) {
             console.error('Error saving message:', error);
-            // حتی در صورت خطا، پیام کاربر نمایش داده شود
+            const errorMessage = document.createElement('div');
+            errorMessage.className = 'message system';
+            errorMessage.textContent = 'Failed to send message. Please try again.';
+            errorMessage.style.color = 'var(--danger)';
+            chatMessages.appendChild(errorMessage);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
         
-        // Simulate support response after a delay
         setTimeout(() => {
             const supportMessage = document.createElement('div');
             supportMessage.className = 'message support';
             supportMessage.textContent = 'Thank you for your message. Our support team will respond shortly.';
             chatMessages.appendChild(supportMessage);
             chatMessages.scrollTop = chatMessages.scrollHeight;
-            
-            // Save automated response to database
-            supabase
-                .from('chat_messages')
-                .insert([
-                    {
-                        user_id: userData.id,
-                        message: 'Thank you for your message. Our support team will respond shortly.',
-                        is_admin: true,
-                        is_read: false,
-                        created_at: new Date().toISOString()
-                    }
-                ])
-                .then(({ error }) => {
-                    if (error) console.error('Error saving support message:', error);
-                });
-        }, 2000);
+        }, 1000);
     }
 }
+
 function showMessage(elementId, text, type) {
     const element = document.getElementById(elementId);
     element.textContent = text;
     element.className = `message ${type}`;
     element.style.display = 'block';
     
-    // Auto-hide success messages after 5 seconds
     if (type === 'success') {
         setTimeout(() => {
             element.style.display = 'none';
@@ -1029,7 +1039,6 @@ function logout() {
     window.location.href = 'index.html';
 }
 
-// Email verification handling
 async function verifyWithdrawalCode() {
     const code = document.getElementById('verification-code').value;
     
@@ -1038,14 +1047,10 @@ async function verifyWithdrawalCode() {
         return;
     }
     
-    // In a real application, you would verify the code with your backend
-    // For this demo, we'll assume any 6-digit code is valid
     if (code.length === 6 && /^\d+$/.test(code)) {
-        // Process the pending withdrawal
         const withdrawal = window.pendingWithdrawal;
         
         try {
-            // Record withdrawal request
             const { error } = await supabase
                 .from('transactions')
                 .insert([
@@ -1064,10 +1069,8 @@ async function verifyWithdrawalCode() {
                 
             if (error) throw error;
             
-            // Show success message
             alert('Withdrawal request submitted successfully! It will be processed within 24 hours.');
             
-            // Close modal and reset form
             document.getElementById('email-modal').style.display = 'none';
             document.getElementById('withdrawal-form').reset();
             loadTransactionHistory();
@@ -1084,5 +1087,3 @@ async function verifyWithdrawalCode() {
 function resendVerificationCode() {
     alert('Verification code has been resent to your email.');
 }
-
-
