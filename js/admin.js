@@ -1153,4 +1153,56 @@ async function generateFinancialReport(startDate, endDate) {
             </div>
             <div class="stat-card">
                 <h4>Net Flow</h4>
-                <div class="stat-value">$22,222
+                <div class="stat-value">$22,222</div>
+            </div>
+        </div>
+        
+        <h4>Revenue Breakdown</h4>
+        <ul>
+            <li>Trading Fees: $1,234</li>
+            <li>Withdrawal Fees: $567</li>
+            <li>Other Income: $89</li>
+            <li><strong>Total Revenue: $1,890</strong></li>
+        </ul>
+    `;
+}
+
+async function generateSystemReport(startDate, endDate) {
+    return `
+        <h3>System Performance Report</h3>
+        <p><strong>Period:</strong> ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()}</p>
+        
+        <h4>Uptime</h4>
+        <p>System uptime: 99.98%</p>
+        
+        <h4>Performance Metrics</h4>
+        <ul>
+            <li>Average response time: 128ms</li>
+            <li>Peak concurrent users: 234</li>
+            <li>API requests processed: 45,678</li>
+            <li>Data transferred: 2.3 GB</li>
+        </ul>
+        
+        <h4>Error Log</h4>
+        <p>No critical errors detected during this period.</p>
+    `;
+}
+
+function showNotification(message, type) {
+    const notificationArea = document.getElementById('notification-area');
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    
+    notificationArea.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
+function logout() {
+    localStorage.removeItem('goldcrypto-user');
+    window.location.href = 'index.html';
+}
