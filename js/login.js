@@ -384,8 +384,7 @@ async function handleSignup(e) {
     }
 }
 
-// در فایل login.js - تابع handleAdminLogin را اینگونه اصلاح کنید:
-
+// جایگزین کردن تابع handleAdminLogin با این کد:
 async function handleAdminLogin(e) {
     e.preventDefault();
     
@@ -401,7 +400,7 @@ async function handleAdminLogin(e) {
     submitButton.disabled = true;
     
     try {
-        // استفاده از احراز هویت واقعی Supabase برای ادمین
+        // استفاده از احراز هویت واقعی
         const { data, error } = await supabase.auth.signInWithPassword({
             email: email,
             password: password
@@ -409,16 +408,32 @@ async function handleAdminLogin(e) {
         
         if (error) throw error;
         
-        // بررسی اینکه کاربر واقعاً ادمین است
+        // بررسی پروفایل کاربر
         const { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .select('level')
+            .select('*')
             .eq('id', data.user.id)
             .single();
             
-        if (profileError) throw profileError;
-        
-        if (profile.level !== 'admin') {
+        if (profileError) {
+            // اگر پروفایل وجود ندارد، ایجاد کنیم
+            const { error: insertError } = await supabase
+                .from('profiles')
+                .insert([
+                    {
+                        id: data.user.id,
+                        email: email,
+                        full_name: 'Administrator',
+                        level: 'admin',
+                        balance: 0,
+                        is_active: true,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    }
+                ]);
+                
+            if (insertError) throw insertError;
+        } else if (profile.level !== 'admin') {
             throw new Error('Access denied. Admin privileges required.');
         }
         
@@ -430,7 +445,7 @@ async function handleAdminLogin(e) {
             is_admin: true
         }));
         
-        // نمایش پیام موفقیت و انتقال
+        // نمایش پیام موفقیت
         showMessage(messageEl, 'Admin login successful! Redirecting...', 'success');
         
         setTimeout(() => {
@@ -439,13 +454,20 @@ async function handleAdminLogin(e) {
         
     } catch (error) {
         console.error('Admin login error:', error);
-        showMessage(messageEl, error.message, 'error');
+        
+        let errorMessage = error.message;
+        if (error.message.includes('Invalid login credentials')) {
+            errorMessage = 'Invalid admin credentials';
+        }
+        
+        showMessage(messageEl, errorMessage, 'error');
     } finally {
         // Reset button
         submitButton.textContent = originalText;
         submitButton.disabled = false;
     }
 }
+
 async function ensureAdminProfile() {
     try {
         // Check if admin profile exists
@@ -570,4 +592,5 @@ async function resendVerificationEmail(email) {
         );
     }
 }
+
 
