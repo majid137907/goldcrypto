@@ -384,6 +384,8 @@ async function handleSignup(e) {
     }
 }
 
+// در فایل login.js - تابع handleAdminLogin را اینگونه اصلاح کنید:
+
 async function handleAdminLogin(e) {
     e.preventDefault();
     
@@ -399,29 +401,41 @@ async function handleAdminLogin(e) {
     submitButton.disabled = true;
     
     try {
-        // Check if credentials match admin credentials
-        if (email === 'admin@gmail.com' && password === '@dmin2461218311020') {
-            // Create or get admin profile
-            await ensureAdminProfile();
+        // استفاده از احراز هویت واقعی Supabase برای ادمین
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+        
+        if (error) throw error;
+        
+        // بررسی اینکه کاربر واقعاً ادمین است
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('level')
+            .eq('id', data.user.id)
+            .single();
             
-            // Store admin data in localStorage
-            localStorage.setItem('goldcrypto-user', JSON.stringify({
-                id: 'admin',
-                email: email,
-                level: 'admin',
-                is_admin: true
-            }));
-            
-            // Show success message
-            showMessage(messageEl, 'Admin login successful! Redirecting...', 'success');
-            
-            // Redirect to admin panel
-            setTimeout(() => {
-                window.location.href = 'admin.html';
-            }, 1500);
-        } else {
-            throw new Error('Invalid admin credentials');
+        if (profileError) throw profileError;
+        
+        if (profile.level !== 'admin') {
+            throw new Error('Access denied. Admin privileges required.');
         }
+        
+        // ذخیره اطلاعات کاربر
+        localStorage.setItem('goldcrypto-user', JSON.stringify({
+            id: data.user.id,
+            email: data.user.email,
+            level: 'admin',
+            is_admin: true
+        }));
+        
+        // نمایش پیام موفقیت و انتقال
+        showMessage(messageEl, 'Admin login successful! Redirecting...', 'success');
+        
+        setTimeout(() => {
+            window.location.href = 'admin.html';
+        }, 1500);
         
     } catch (error) {
         console.error('Admin login error:', error);
@@ -432,7 +446,6 @@ async function handleAdminLogin(e) {
         submitButton.disabled = false;
     }
 }
-
 async function ensureAdminProfile() {
     try {
         // Check if admin profile exists
@@ -557,3 +570,4 @@ async function resendVerificationEmail(email) {
         );
     }
 }
+
