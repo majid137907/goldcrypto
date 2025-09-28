@@ -725,9 +725,11 @@ function addMaintenanceLog(message) {
     log.scrollTop = log.scrollHeight;
 }
 
-// سیستم چت کاملاً بازنویسی شده
+// در تابع loadActiveChats این اصلاحات را اعمال کنید
 async function loadActiveChats() {
     try {
+        console.log('Loading active chats...');
+        
         // Get unique users with chat messages
         const { data: messages, error } = await supabase
             .from('chat_messages')
@@ -737,15 +739,39 @@ async function loadActiveChats() {
             `)
             .order('created_at', { ascending: false });
             
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase error:', error);
+            
+            // اگر جدول وجود ندارد، پیام مناسب نمایش دهید
+            if (error.code === '42P01') { // relation does not exist
+                const chatList = document.getElementById('chat-list');
+                chatList.innerHTML = `
+                    <div class="error-message">
+                        <p>Chat table not found. Please run the SQL setup in Supabase.</p>
+                        <button onclick="createChatTable()" class="action-button">Create Chat Table</button>
+                    </div>
+                `;
+                return;
+            }
+            throw error;
+        }
         
-        // Group by user and count unread messages
+        console.log('Messages loaded:', messages);
+        
+        // اگر هیچ پیامی وجود ندارد
+        if (!messages || messages.length === 0) {
+            const chatList = document.getElementById('chat-list');
+            chatList.innerHTML = '<p class="no-chats">No conversations yet</p>';
+            return;
+        }
+        
+        // Group messages by user
         const userChats = new Map();
         
-        (messages || []).forEach(message => {
+        messages.forEach(message => {
             if (!userChats.has(message.user_id)) {
                 userChats.set(message.user_id, {
-                    user: message.profiles,
+                    user: message.profiles || { email: 'Unknown User', full_name: 'Unknown User' },
                     lastMessage: message.message,
                     lastTime: message.created_at,
                     unreadCount: 0,
@@ -756,13 +782,13 @@ async function loadActiveChats() {
             const chat = userChats.get(message.user_id);
             chat.messageCount++;
             
-            // Update last message
+            // Update last message if this is newer
             if (new Date(message.created_at) > new Date(chat.lastTime)) {
                 chat.lastMessage = message.message;
                 chat.lastTime = message.created_at;
             }
             
-            // Count unread user messages
+            // Count unread messages from user
             if (!message.is_admin && !message.is_read) {
                 chat.unreadCount++;
             }
@@ -771,11 +797,6 @@ async function loadActiveChats() {
         // Update UI
         const chatList = document.getElementById('chat-list');
         chatList.innerHTML = '';
-        
-        if (userChats.size === 0) {
-            chatList.innerHTML = '<p class="no-chats">No active conversations</p>';
-            return;
-        }
         
         userChats.forEach((chat, userId) => {
             const chatItem = document.createElement('div');
@@ -802,13 +823,10 @@ async function loadActiveChats() {
             
             // Add click event
             chatItem.addEventListener('click', () => {
-                // Remove selected class from all items
                 document.querySelectorAll('.chat-item').forEach(item => {
                     item.classList.remove('selected');
                 });
-                // Add selected class to current item
                 chatItem.classList.add('selected');
-                
                 loadUserChat(userId, chat.user);
             });
         });
@@ -816,10 +834,24 @@ async function loadActiveChats() {
     } catch (error) {
         console.error('Error loading active chats:', error);
         const chatList = document.getElementById('chat-list');
-        chatList.innerHTML = '<p class="error-message">Error loading conversations</p>';
+        chatList.innerHTML = `
+            <div class="error-message">
+                <p>Error loading conversations: ${error.message}</p>
+                <button onclick="loadActiveChats()" class="action-button">Retry</button>
+            </div>
+        `;
     }
 }
 
+// تابع کمکی برای ایجاد جدول (اختیاری)
+async function createChatTable() {
+    try {
+        // این تابع فقط برای نمایش است - در عمل باید SQL را در Supabase اجرا کنید
+        alert('Please run the SQL setup in Supabase SQL Editor to create the chat_messages table.');
+    } catch (error) {
+        console.error('Error creating table:', error);
+    }
+}
 async function loadUserChat(userId, user) {
     try {
         currentChatUser = { id: userId, ...user };
@@ -1248,3 +1280,4 @@ function logout() {
     localStorage.removeItem('goldcrypto-user');
     window.location.href = 'index.html';
 }
+
