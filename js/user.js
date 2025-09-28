@@ -176,9 +176,24 @@ async function loadUserData() {
 
 async function loadMarketPrices() {
     try {
+        const pricesContainer = document.getElementById('market-prices');
+        if (!pricesContainer) return;
+
         // استفاده از coinmarketcap.js برای دریافت قیمت‌ها
         if (typeof fetchCryptoPrices === 'function') {
-            fetchCryptoPrices();
+            // اگر قیمت‌ها قبلاً لود شده‌اند، نمایش بده
+            if (typeof currentPrices !== 'undefined' && Object.keys(currentPrices).length > 0) {
+                useRealMarketData();
+            } else {
+                // در غیر این صورت منتظر لود شدن بمان
+                setTimeout(() => {
+                    if (typeof currentPrices !== 'undefined' && Object.keys(currentPrices).length > 0) {
+                        useRealMarketData();
+                    } else {
+                        useMockMarketData();
+                    }
+                }, 1000);
+            }
         } else {
             // Fallback to mock data
             useMockMarketData();
@@ -187,6 +202,36 @@ async function loadMarketPrices() {
         console.error('Error loading market prices:', error);
         useMockMarketData();
     }
+}
+
+// تابع جدید برای استفاده از داده‌های واقعی
+function useRealMarketData() {
+    const pricesContainer = document.getElementById('market-prices');
+    if (!pricesContainer || typeof currentPrices === 'undefined') return;
+    
+    pricesContainer.innerHTML = '';
+    
+    if (Object.keys(currentPrices).length === 0) {
+        useMockMarketData();
+        return;
+    }
+    
+    Object.keys(currentPrices).forEach(symbol => {
+        const crypto = currentPrices[symbol];
+        const changeClass = crypto.change >= 0 ? 'positive' : 'negative';
+        const changeSymbol = crypto.change >= 0 ? '↑' : '↓';
+        
+        const priceItem = document.createElement('div');
+        priceItem.className = 'price-item';
+        priceItem.innerHTML = `
+            <div class="price-symbol">${symbol}</div>
+            <div class="price-name">${crypto.name}</div>
+            <div class="price-value">$${crypto.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div class="price-change ${changeClass}">${changeSymbol} ${Math.abs(crypto.change).toFixed(2)}%</div>
+        `;
+        
+        pricesContainer.appendChild(priceItem);
+    });
 }
 
 function useMockMarketData() {
@@ -213,8 +258,8 @@ function useMockMarketData() {
         priceItem.innerHTML = `
             <div class="price-symbol">${crypto.symbol}</div>
             <div class="price-name">${crypto.name}</div>
-            <div class="price-value">$${crypto.price.toLocaleString()}</div>
-            <div class="price-change ${changeClass}">${changeSymbol} ${Math.abs(crypto.change)}%</div>
+            <div class="price-value">$${crypto.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div class="price-change ${changeClass}">${changeSymbol} ${Math.abs(crypto.change).toFixed(2)}%</div>
         `;
         
         pricesContainer.appendChild(priceItem);
@@ -336,7 +381,8 @@ async function loadOpenTrades() {
             const tradeItem = document.createElement('div');
             tradeItem.className = 'trade-item';
             
-            const currentPrice = getCurrentPrice(trade.symbol);
+            // استفاده از تابع getCurrentPrice از coinmarketcap.js
+            const currentPrice = typeof getCurrentPrice === 'function' ? getCurrentPrice(trade.symbol) : getCurrentPriceFallback(trade.symbol);
             const pnl = trade.type === 'buy' 
                 ? (currentPrice - trade.price) * trade.amount * trade.leverage
                 : (trade.price - currentPrice) * trade.amount * trade.leverage;
@@ -368,7 +414,8 @@ async function loadOpenTrades() {
     }
 }
 
-function getCurrentPrice(symbol) {
+// تابع fallback برای زمانی که coinmarketcap.js لود نشده
+function getCurrentPriceFallback(symbol) {
     const prices = {
         'BTC': 43456.78,
         'ETH': 2345.67,
@@ -382,7 +429,9 @@ function getCurrentPrice(symbol) {
 
 function updateTradeChart() {
     const symbol = document.getElementById('trade-symbol').value;
-    const currentPrice = getCurrentPrice(symbol);
+    
+    // استفاده از تابع getCurrentPrice از coinmarketcap.js
+    const currentPrice = typeof getCurrentPrice === 'function' ? getCurrentPrice(symbol) : getCurrentPriceFallback(symbol);
     
     document.getElementById('entry-price').value = currentPrice.toFixed(2);
     
@@ -521,7 +570,8 @@ async function closeTrade(tradeId) {
             
         if (tradeError) throw tradeError;
         
-        const currentPrice = getCurrentPrice(trade.symbol);
+        // استفاده از تابع getCurrentPrice از coinmarketcap.js
+        const currentPrice = typeof getCurrentPrice === 'function' ? getCurrentPrice(trade.symbol) : getCurrentPriceFallback(trade.symbol);
         let pnl = 0;
         
         if (trade.type === 'buy') {
