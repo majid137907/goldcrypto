@@ -6,6 +6,9 @@ const API_URLS = [
 
 const CRYPTO_SYMBOLS = ['BTC', 'ETH', 'USDT', 'BNB', 'XRP', 'ADA', 'SOL', 'DOT'];
 
+// متغیر global برای ذخیره قیمت‌ها
+let currentPrices = {};
+
 async function fetchCryptoPrices() {
     try {
         console.log('Fetching prices from CoinGecko...');
@@ -20,6 +23,7 @@ async function fetchCryptoPrices() {
         const data = await response.json();
         console.log('CoinGecko data:', data);
         displayPricesFromCoinGecko(data);
+        updateAllPriceDisplays();
 
     } catch (error) {
         console.error('Error fetching prices from CoinGecko:', error);
@@ -43,18 +47,31 @@ async function fetchFromBinance() {
 
     const data = await response.json();
     displayPricesFromBinance(data);
+    updateAllPriceDisplays();
 }
 
 function displayPricesFromCoinGecko(data) {
     const container = document.getElementById('pricesContainer');
-    if (!container) return;
     
-    container.innerHTML = '';
+    // ذخیره قیمت‌ها در متغیر global
+    currentPrices = {};
     
     // فیلتر کردن فقط ارزهای مورد نظر
     const filteredPrices = data.filter(crypto => 
         CRYPTO_SYMBOLS.includes(crypto.symbol.toUpperCase())
     );
+    
+    filteredPrices.forEach(crypto => {
+        currentPrices[crypto.symbol.toUpperCase()] = {
+            price: crypto.current_price,
+            change: crypto.price_change_percentage_24h || 0,
+            name: crypto.name
+        };
+    });
+    
+    if (!container) return;
+    
+    container.innerHTML = '';
     
     filteredPrices.forEach(crypto => {
         const priceCard = document.createElement('div');
@@ -79,12 +96,28 @@ function displayPricesFromCoinGecko(data) {
 
 function displayPricesFromBinance(data) {
     const container = document.getElementById('pricesContainer');
-    if (!container) return;
     
-    container.innerHTML = '';
+    // ذخیره قیمت‌ها در متغیر global
+    currentPrices = {};
     
     // Binance داده‌های مختلفی برمی‌گرداند، این یک نمونه ساده است
     const symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'ADAUSDT', 'XRPUSDT', 'SOLUSDT'];
+    
+    symbols.forEach(symbol => {
+        const cryptoData = data.find(item => item.symbol === symbol);
+        if (cryptoData) {
+            const symbolName = symbol.replace('USDT', '');
+            currentPrices[symbolName] = {
+                price: parseFloat(cryptoData.lastPrice),
+                change: parseFloat(cryptoData.priceChangePercent) || 0,
+                name: getCryptoName(symbolName)
+            };
+        }
+    });
+    
+    if (!container) return;
+    
+    container.innerHTML = '';
     
     symbols.forEach(symbol => {
         const cryptoData = data.find(item => item.symbol === symbol);
@@ -137,7 +170,18 @@ function useMockData() {
         { symbol: 'DOT', name: 'Polkadot', price: 6.78, change: -2.34 }
     ];
     
+    // ذخیره در متغیر global
+    currentPrices = {};
+    mockPrices.forEach(crypto => {
+        currentPrices[crypto.symbol] = {
+            price: crypto.price,
+            change: crypto.change,
+            name: crypto.name
+        };
+    });
+    
     displayPrices(mockPrices);
+    updateAllPriceDisplays();
 }
 
 function displayPrices(prices) {
@@ -164,6 +208,51 @@ function displayPrices(prices) {
         
         container.appendChild(priceCard);
     });
+}
+
+// تابع جدید برای بروزرسانی تمام نمایش‌دهنده‌های قیمت
+function updateAllPriceDisplays() {
+    // بروزرسانی market-prices در صفحه کاربر
+    const marketPricesContainer = document.getElementById('market-prices');
+    if (marketPricesContainer && Object.keys(currentPrices).length > 0) {
+        marketPricesContainer.innerHTML = '';
+        
+        Object.keys(currentPrices).forEach(symbol => {
+            const crypto = currentPrices[symbol];
+            const changeClass = crypto.change >= 0 ? 'positive' : 'negative';
+            const changeSymbol = crypto.change >= 0 ? '↑' : '↓';
+            
+            const priceItem = document.createElement('div');
+            priceItem.className = 'price-item';
+            priceItem.innerHTML = `
+                <div class="price-symbol">${symbol}</div>
+                <div class="price-name">${crypto.name}</div>
+                <div class="price-value">$${crypto.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                <div class="price-change ${changeClass}">${changeSymbol} ${Math.abs(crypto.change).toFixed(2)}%</div>
+            `;
+            
+            marketPricesContainer.appendChild(priceItem);
+        });
+    }
+}
+
+// تابع برای دریافت قیمت جاری (مورد استفاده در user.js)
+function getCurrentPrice(symbol) {
+    if (currentPrices[symbol]) {
+        return currentPrices[symbol].price;
+    }
+    
+    // Fallback prices if no data available
+    const fallbackPrices = {
+        'BTC': 43456.78,
+        'ETH': 2345.67,
+        'SOL': 98.76,
+        'ADA': 0.4321,
+        'XRP': 0.5678,
+        'DOT': 6.78
+    };
+    
+    return fallbackPrices[symbol] || 0;
 }
 
 // Refresh prices every 30 seconds
