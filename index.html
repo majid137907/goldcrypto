@@ -22,7 +22,7 @@
                 <h1>GoldCrypto</h1>
             </div>
             <div class="nav-menu">
-                <a href="index.html">Home</a>
+                <a href="index.html" class="active">Home</a>
                 <a href="login.html">Login/Signup</a>
                 <div class="language-selector">
                     <select id="languageSelect">
@@ -40,15 +40,15 @@
         <!-- Banner Section -->
         <section class="banner">
             <div class="banner-content">
-                <h2>200% Bonus on First Deposit!</h2>
-                <p>Start trading with double your initial investment</p>
-                <button class="cta-button" onclick="location.href='login.html'">Get Started</button>
+                <h2 data-translate="welcome">Welcome to GoldCrypto</h2>
+                <p data-translate="bonus">200% Bonus on First Deposit!</p>
+                <button class="cta-button" onclick="location.href='login.html'" data-translate="getStarted">Get Started</button>
             </div>
         </section>
 
         <!-- Live Prices Section -->
         <section class="prices-section">
-            <h2>Live Cryptocurrency Prices</h2>
+            <h2 data-translate="prices">Live Cryptocurrency Prices</h2>
             <div id="pricesContainer" class="prices-grid">
                 <!-- Prices will be loaded here by JavaScript -->
             </div>
@@ -66,7 +66,7 @@
     <!-- Online Chat Widget -->
     <div class="chat-widget">
         <div class="chat-header">
-            <span>Live Support</span>
+            <span data-translate="support">Live Support</span>
             <button class="chat-toggle">-</button>
         </div>
         <div class="chat-body">
