@@ -482,11 +482,26 @@ async function loadWalletSettings() {
             }
         });
         
+        // اگر هیچ ولتی وجود ندارد، مقادیر پیش‌فرض قرار دهید
+        if (!wallets || wallets.length === 0) {
+            setDefaultWalletAddresses();
+        }
+        
     } catch (error) {
         console.error('Error loading wallet settings:', error);
+        setDefaultWalletAddresses();
     }
 }
 
+function setDefaultWalletAddresses() {
+    // آدرس‌های پیش‌فرض - اینها را با آدرس‌های واقعی خود جایگزین کنید
+    document.getElementById('trc20-address').value = 'THdTNV89Y57cnReqZvZ9JGuBTw25me5UGM';
+    document.getElementById('erc20-address').value = '0x572d104aaa445bd8a82a19315e09cc3472e72cb2';
+    document.getElementById('trc20-status').value = 'active';
+    document.getElementById('erc20-status').value = 'active';
+    
+    console.log('Using default wallet addresses. Please update them in admin panel.');
+}
 async function saveWalletSettings(type) {
     try {
         const address = document.getElementById(`${type}-address`).value;
@@ -1206,3 +1221,4 @@ function logout() {
     localStorage.removeItem('goldcrypto-user');
     window.location.href = 'index.html';
 }
+
