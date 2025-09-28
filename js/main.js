@@ -114,4 +114,69 @@ function sendMessage() {
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }, 1000);
     }
+
 }
+
+// particles.js - Add this to your main.js
+function createParticles() {
+    const container = document.createElement('div');
+    container.className = 'particles-container';
+    document.body.appendChild(container);
+    
+    const particleCount = 30;
+    
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        
+        // Random properties
+        const size = Math.random() * 4 + 1;
+        const posX = Math.random() * 100;
+        const posY = Math.random() * 100;
+        const delay = Math.random() * 10;
+        const duration = Math.random() * 10 + 10;
+        
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${posX}%`;
+        particle.style.top = `${posY}%`;
+        particle.style.animationDelay = `${delay}s`;
+        particle.style.animationDuration = `${duration}s`;
+        
+        container.appendChild(particle);
+    }
+}
+
+// Navbar scroll effect
+function initNavbarScroll() {
+    const navbar = document.querySelector('.navbar');
+    let lastScrollY = window.scrollY;
+    
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 100) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+        
+        lastScrollY = window.scrollY;
+    });
+}
+
+// Initialize all effects
+document.addEventListener('DOMContentLoaded', function() {
+    createParticles();
+    initNavbarScroll();
+    
+    // Add hover effects to price cards
+    const priceCards = document.querySelectorAll('.price-card');
+    priceCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.zIndex = '10';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.zIndex = '1';
+        });
+    });
+});
