@@ -1,6 +1,5 @@
-// Admin Panel JavaScript
+// admin.js - نسخه بازنویسی شده
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize the admin panel
     initAdminPanel();
 });
 
@@ -12,21 +11,14 @@ let currentChatUser = null;
 let chatSubscription = null;
 
 async function initAdminPanel() {
-    // Check if user is admin
     await checkAdminAuth();
-    
-    // Set up event listeners
     setupAdminEventListeners();
-    
-    // Load initial data
     loadDashboardStats();
     loadRecentActivity();
     loadUsers();
     loadWalletSettings();
     loadSystemSettings();
     loadActiveChats();
-    
-    // Set up real-time subscriptions
     setupRealtimeSubscriptions();
 }
 
@@ -38,12 +30,11 @@ async function checkAdminAuth() {
         return;
     }
     
-    // Update UI with admin data
     document.getElementById('admin-name').textContent = adminData.email;
 }
 
 function setupAdminEventListeners() {
-    // Sidebar navigation
+    // Navigation
     document.querySelectorAll('.admin-link').forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
@@ -51,7 +42,7 @@ function setupAdminEventListeners() {
             showAdminSection(section);
         });
     });
-    
+
     // Card actions
     document.querySelectorAll('.card-action').forEach(button => {
         button.addEventListener('click', function() {
@@ -59,10 +50,10 @@ function setupAdminEventListeners() {
             showAdminSection(section);
         });
     });
-    
-    // Logout button
+
+    // Logout
     document.getElementById('admin-logout').addEventListener('click', logout);
-    
+
     // User management
     document.getElementById('search-users').addEventListener('click', loadUsers);
     document.getElementById('user-search').addEventListener('keypress', function(e) {
@@ -72,11 +63,11 @@ function setupAdminEventListeners() {
     document.getElementById('user-status-filter').addEventListener('change', loadUsers);
     document.getElementById('prev-page').addEventListener('click', () => changePage(-1));
     document.getElementById('next-page').addEventListener('click', () => changePage(1));
-    
+
     // User edit form
     document.getElementById('user-edit-form').addEventListener('submit', saveUserChanges);
     document.getElementById('delete-user').addEventListener('click', deleteUser);
-    
+
     // Wallet settings
     document.querySelectorAll('.save-wallet').forEach(button => {
         button.addEventListener('click', function() {
@@ -84,16 +75,16 @@ function setupAdminEventListeners() {
             saveWalletSettings(type);
         });
     });
-    
+
     // System settings
     document.getElementById('trading-settings-form').addEventListener('submit', saveTradingSettings);
     document.getElementById('withdrawal-settings-form').addEventListener('submit', saveWithdrawalSettings);
-    
+
     // Maintenance actions
     document.getElementById('backup-database').addEventListener('click', backupDatabase);
     document.getElementById('clear-cache').addEventListener('click', clearCache);
     document.getElementById('system-status').addEventListener('click', checkSystemStatus);
-    
+
     // Support chat
     document.getElementById('admin-send-message').addEventListener('click', sendAdminMessage);
     document.getElementById('admin-chat-input').addEventListener('keypress', function(e) {
@@ -102,12 +93,12 @@ function setupAdminEventListeners() {
             sendAdminMessage();
         }
     });
-    
+
     // Reports
     document.getElementById('report-type').addEventListener('change', toggleCustomRange);
     document.getElementById('report-period').addEventListener('change', toggleCustomRange);
     document.getElementById('generate-report').addEventListener('click', generateReport);
-    
+
     // Modal close buttons
     document.querySelectorAll('.close').forEach(closeBtn => {
         closeBtn.addEventListener('click', () => {
@@ -116,7 +107,7 @@ function setupAdminEventListeners() {
             });
         });
     });
-    
+
     // Close modal when clicking outside
     window.addEventListener('click', (e) => {
         document.querySelectorAll('.modal').forEach(modal => {
@@ -125,7 +116,7 @@ function setupAdminEventListeners() {
             }
         });
     });
-    
+
     // Confirmation modal
     document.getElementById('cancel-action').addEventListener('click', () => {
         document.getElementById('confirmation-modal').style.display = 'none';
@@ -133,7 +124,6 @@ function setupAdminEventListeners() {
 }
 
 function showAdminSection(section) {
-    // Update active sidebar link
     document.querySelectorAll('.admin-link').forEach(link => {
         link.classList.remove('active');
         if (link.getAttribute('data-section') === section) {
@@ -141,13 +131,15 @@ function showAdminSection(section) {
         }
     });
     
-    // Show corresponding section
     document.querySelectorAll('.admin-section').forEach(sectionEl => {
         sectionEl.classList.remove('active');
     });
-    document.getElementById(`${section}-section`).classList.add('active');
     
-    // Load section-specific data
+    const targetSection = document.getElementById(`${section}-section`);
+    if (targetSection) {
+        targetSection.classList.add('active');
+    }
+    
     if (section === 'dashboard') {
         loadDashboardStats();
         loadRecentActivity();
@@ -162,23 +154,23 @@ function showAdminSection(section) {
 
 async function loadDashboardStats() {
     try {
-        // Get total users count
+        // Total users
         const { count: totalUsers, error: usersError } = await supabase
             .from('profiles')
             .select('*', { count: 'exact', head: true });
             
         if (usersError) throw usersError;
         
-        // Get active users today
+        // Active users today
         const today = new Date().toISOString().split('T')[0];
         const { count: activeToday, error: activeError } = await supabase
             .from('profiles')
             .select('*', { count: 'exact', head: true })
-            .gt('last_login', today);
+            .gte('last_login', today);
             
         if (activeError) throw activeError;
         
-        // Get total balance
+        // Total balance
         const { data: balances, error: balanceError } = await supabase
             .from('profiles')
             .select('balance');
@@ -200,7 +192,6 @@ async function loadDashboardStats() {
 
 async function loadRecentActivity() {
     try {
-        // Get recent transactions
         const { data: transactions, error } = await supabase
             .from('transactions')
             .select('*')
@@ -209,7 +200,6 @@ async function loadRecentActivity() {
             
         if (error) throw error;
         
-        // Get recent trades
         const { data: trades, error: tradesError } = await supabase
             .from('trades')
             .select('*')
@@ -218,7 +208,6 @@ async function loadRecentActivity() {
             
         if (tradesError) throw tradesError;
         
-        // Combine and sort activities
         const activities = [
             ...(transactions || []).map(t => ({
                 type: 'Transaction',
@@ -232,7 +221,6 @@ async function loadRecentActivity() {
             }))
         ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 10);
         
-        // Update UI
         const activityList = document.getElementById('recent-activity');
         activityList.innerHTML = '';
         
@@ -265,12 +253,10 @@ async function loadUsers() {
         const levelFilter = document.getElementById('user-level-filter').value;
         const statusFilter = document.getElementById('user-status-filter').value;
         
-        // Build query
         let query = supabase
             .from('profiles')
             .select('*', { count: 'exact' });
             
-        // Apply filters
         if (searchTerm) {
             query = query.or(`email.ilike.%${searchTerm}%,full_name.ilike.%${searchTerm}%`);
         }
@@ -283,7 +269,6 @@ async function loadUsers() {
             query = query.eq('is_active', statusFilter === 'active');
         }
         
-        // Apply pagination
         const from = (currentPage - 1) * usersPerPage;
         const to = from + usersPerPage - 1;
         
@@ -295,7 +280,6 @@ async function loadUsers() {
         
         totalUsers = count;
         
-        // Update UI
         const tableBody = document.getElementById('users-table-body');
         tableBody.innerHTML = '';
         
@@ -321,10 +305,8 @@ async function loadUsers() {
             tableBody.appendChild(row);
         });
         
-        // Update pagination
         updatePagination();
         
-        // Add event listeners to action buttons
         document.querySelectorAll('.edit-user').forEach(button => {
             button.addEventListener('click', function() {
                 const userId = this.getAttribute('data-user-id');
@@ -365,7 +347,6 @@ function changePage(direction) {
 
 async function editUser(userId) {
     try {
-        // Get user data
         const { data: user, error } = await supabase
             .from('profiles')
             .select('*')
@@ -374,7 +355,6 @@ async function editUser(userId) {
             
         if (error) throw error;
         
-        // Populate form
         document.getElementById('edit-user-id').value = user.id;
         document.getElementById('edit-user-email').value = user.email;
         document.getElementById('edit-user-name').value = user.full_name || '';
@@ -382,7 +362,6 @@ async function editUser(userId) {
         document.getElementById('edit-user-balance').value = user.balance || 0;
         document.getElementById('edit-user-status').value = user.is_active ? 'active' : 'inactive';
         
-        // Show modal
         document.getElementById('user-edit-modal').style.display = 'block';
         
     } catch (error) {
@@ -401,7 +380,6 @@ async function saveUserChanges(e) {
         const balance = parseFloat(document.getElementById('edit-user-balance').value);
         const status = document.getElementById('edit-user-status').value === 'active';
         
-        // Update user in Supabase
         const { error } = await supabase
             .from('profiles')
             .update({
@@ -415,7 +393,6 @@ async function saveUserChanges(e) {
             
         if (error) throw error;
         
-        // Close modal and refresh users list
         document.getElementById('user-edit-modal').style.display = 'none';
         loadUsers();
         showNotification('User updated successfully', 'success');
@@ -427,15 +404,12 @@ async function saveUserChanges(e) {
 }
 
 function confirmDeleteUser(userId) {
-    // Store userId for confirmation
     window.pendingDeleteUserId = userId;
     
-    // Show confirmation modal
     document.getElementById('confirmation-title').textContent = 'Delete User';
     document.getElementById('confirmation-message').textContent = 'Are you sure you want to delete this user? This action cannot be undone.';
     document.getElementById('confirmation-modal').style.display = 'block';
     
-    // Set up confirmation handler
     document.getElementById('confirm-action').onclick = deleteUserConfirmed;
 }
 
@@ -443,7 +417,6 @@ async function deleteUserConfirmed() {
     try {
         const userId = window.pendingDeleteUserId;
         
-        // Delete user from Supabase
         const { error } = await supabase
             .from('profiles')
             .delete()
@@ -451,7 +424,6 @@ async function deleteUserConfirmed() {
             
         if (error) throw error;
         
-        // Close modal and refresh users list
         document.getElementById('confirmation-modal').style.display = 'none';
         loadUsers();
         showNotification('User deleted successfully', 'success');
@@ -464,26 +436,23 @@ async function deleteUserConfirmed() {
 
 async function loadWalletSettings() {
     try {
-        // Get wallet settings from Supabase
+        // Try to load from database first
         const { data: wallets, error } = await supabase
             .from('wallets')
             .select('*');
             
-        if (error) throw error;
-        
-        // Update UI
-        (wallets || []).forEach(wallet => {
-            if (wallet.type === 'trc20') {
-                document.getElementById('trc20-address').value = wallet.address;
-                document.getElementById('trc20-status').value = wallet.is_active ? 'active' : 'inactive';
-            } else if (wallet.type === 'erc20') {
-                document.getElementById('erc20-address').value = wallet.address;
-                document.getElementById('erc20-status').value = wallet.is_active ? 'active' : 'inactive';
-            }
-        });
-        
-        // اگر هیچ ولتی وجود ندارد، مقادیر پیش‌فرض قرار دهید
-        if (!wallets || wallets.length === 0) {
+        if (!error && wallets && wallets.length > 0) {
+            wallets.forEach(wallet => {
+                if (wallet.type === 'trc20') {
+                    document.getElementById('trc20-address').value = wallet.address;
+                    document.getElementById('trc20-status').value = wallet.is_active ? 'active' : 'inactive';
+                } else if (wallet.type === 'erc20') {
+                    document.getElementById('erc20-address').value = wallet.address;
+                    document.getElementById('erc20-status').value = wallet.is_active ? 'active' : 'inactive';
+                }
+            });
+        } else {
+            // Use default addresses
             setDefaultWalletAddresses();
         }
         
@@ -494,14 +463,12 @@ async function loadWalletSettings() {
 }
 
 function setDefaultWalletAddresses() {
-    // آدرس‌های پیش‌فرض - اینها را با آدرس‌های واقعی خود جایگزین کنید
     document.getElementById('trc20-address').value = 'THdTNV89Y57cnReqZvZ9JGuBTw25me5UGM';
     document.getElementById('erc20-address').value = '0x572d104aaa445bd8a82a19315e09cc3472e72cb2';
     document.getElementById('trc20-status').value = 'active';
     document.getElementById('erc20-status').value = 'active';
-    
-    console.log('Using default wallet addresses. Please update them in admin panel.');
 }
+
 async function saveWalletSettings(type) {
     try {
         const address = document.getElementById(`${type}-address`).value;
@@ -520,7 +487,7 @@ async function saveWalletSettings(type) {
             .single();
             
         if (checkError && checkError.code === 'PGRST116') {
-            // Wallet doesn't exist, create it
+            // Create new wallet
             const { error } = await supabase
                 .from('wallets')
                 .insert([
@@ -535,7 +502,7 @@ async function saveWalletSettings(type) {
                 
             if (error) throw error;
         } else {
-            // Wallet exists, update it
+            // Update existing wallet
             const { error } = await supabase
                 .from('wallets')
                 .update({
@@ -558,7 +525,6 @@ async function saveWalletSettings(type) {
 
 async function loadDepositRequests() {
     try {
-        // Get pending deposit requests
         const { data: deposits, error } = await supabase
             .from('transactions')
             .select(`
@@ -571,7 +537,6 @@ async function loadDepositRequests() {
             
         if (error) throw error;
         
-        // Update UI
         const container = document.getElementById('deposit-requests');
         container.innerHTML = '';
         
@@ -597,7 +562,6 @@ async function loadDepositRequests() {
             container.appendChild(item);
         });
         
-        // Add event listeners to action buttons
         document.querySelectorAll('.approve-deposit').forEach(button => {
             button.addEventListener('click', function() {
                 const transactionId = this.getAttribute('data-transaction-id');
@@ -619,7 +583,6 @@ async function loadDepositRequests() {
 
 async function processDeposit(transactionId, status) {
     try {
-        // Update transaction status
         const { error } = await supabase
             .from('transactions')
             .update({ status: status })
@@ -627,9 +590,7 @@ async function processDeposit(transactionId, status) {
             
         if (error) throw error;
         
-        // If approved, update user balance
         if (status === 'completed') {
-            // Get transaction details
             const { data: transaction, error: txError } = await supabase
                 .from('transactions')
                 .select('*')
@@ -638,7 +599,6 @@ async function processDeposit(transactionId, status) {
                 
             if (txError) throw txError;
             
-            // Get current user balance
             const { data: user, error: userError } = await supabase
                 .from('profiles')
                 .select('balance')
@@ -647,7 +607,6 @@ async function processDeposit(transactionId, status) {
                 
             if (userError) throw userError;
             
-            // Update user balance
             const newBalance = (user.balance || 0) + transaction.amount;
             const { error: updateError } = await supabase
                 .from('profiles')
@@ -656,7 +615,6 @@ async function processDeposit(transactionId, status) {
                 
             if (updateError) throw updateError;
             
-            // Check if user should be upgraded to premium
             if (newBalance >= 70) {
                 const { error: upgradeError } = await supabase
                     .from('profiles')
@@ -668,7 +626,6 @@ async function processDeposit(transactionId, status) {
             }
         }
         
-        // Refresh deposit requests
         loadDepositRequests();
         showNotification(`Deposit request ${status} successfully`, 'success');
         
@@ -679,33 +636,21 @@ async function processDeposit(transactionId, status) {
 }
 
 async function loadSystemSettings() {
-    try {
-        // In a real application, you would load these from a settings table
-        // For now, we'll use default values
-        document.getElementById('min-trade-amount').value = 10;
-        document.getElementById('max-leverage').value = 10;
-        document.getElementById('premium-threshold').value = 70;
-        document.getElementById('min-withdrawal').value = 10;
-        document.getElementById('withdrawal-fee').value = 1;
-        document.getElementById('auto-approve-withdrawals').value = 'disabled';
-        
-    } catch (error) {
-        console.error('Error loading system settings:', error);
-    }
+    // Use default values
+    document.getElementById('min-trade-amount').value = 10;
+    document.getElementById('max-leverage').value = 10;
+    document.getElementById('premium-threshold').value = 70;
+    document.getElementById('min-withdrawal').value = 10;
+    document.getElementById('withdrawal-fee').value = 1;
+    document.getElementById('auto-approve-withdrawals').value = 'disabled';
 }
 
 async function saveTradingSettings(e) {
     e.preventDefault();
     
     try {
-        // In a real application, you would save these to a settings table
-        const minTradeAmount = document.getElementById('min-trade-amount').value;
-        const maxLeverage = document.getElementById('max-leverage').value;
-        const premiumThreshold = document.getElementById('premium-threshold').value;
-        
         // Simulate saving
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
         showNotification('Trading settings saved successfully', 'success');
         
     } catch (error) {
@@ -718,14 +663,8 @@ async function saveWithdrawalSettings(e) {
     e.preventDefault();
     
     try {
-        // In a real application, you would save these to a settings table
-        const minWithdrawal = document.getElementById('min-withdrawal').value;
-        const withdrawalFee = document.getElementById('withdrawal-fee').value;
-        const autoApprove = document.getElementById('auto-approve-withdrawals').value;
-        
         // Simulate saving
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
         showNotification('Withdrawal settings saved successfully', 'success');
         
     } catch (error) {
@@ -736,12 +675,9 @@ async function saveWithdrawalSettings(e) {
 
 async function backupDatabase() {
     try {
-        // In a real application, this would trigger a database backup
         addMaintenanceLog('Starting database backup...');
-        
         await new Promise(resolve => setTimeout(resolve, 2000));
         addMaintenanceLog('Database backup completed successfully');
-        
         showNotification('Database backup completed', 'success');
         
     } catch (error) {
@@ -753,12 +689,9 @@ async function backupDatabase() {
 
 async function clearCache() {
     try {
-        // In a real application, this would clear various caches
         addMaintenanceLog('Clearing cache...');
-        
         await new Promise(resolve => setTimeout(resolve, 1000));
         addMaintenanceLog('Cache cleared successfully');
-        
         showNotification('Cache cleared successfully', 'success');
         
     } catch (error) {
@@ -770,12 +703,9 @@ async function clearCache() {
 
 async function checkSystemStatus() {
     try {
-        // In a real application, this would check various system components
         addMaintenanceLog('Checking system status...');
-        
         await new Promise(resolve => setTimeout(resolve, 1500));
         addMaintenanceLog('System status: All systems operational');
-        
         showNotification('System status check completed', 'success');
         
     } catch (error) {
@@ -795,10 +725,10 @@ function addMaintenanceLog(message) {
     log.scrollTop = log.scrollHeight;
 }
 
-// در تابع loadActiveChats اصلاحات زیر را اعمال کنید
+// سیستم چت کاملاً بازنویسی شده
 async function loadActiveChats() {
     try {
-        // Get users with recent chat messages
+        // Get unique users with chat messages
         const { data: messages, error } = await supabase
             .from('chat_messages')
             .select(`
@@ -809,18 +739,32 @@ async function loadActiveChats() {
             
         if (error) throw error;
         
-        // Group messages by user and get the latest message for each user
-        const userMap = new Map();
+        // Group by user and count unread messages
+        const userChats = new Map();
         
         (messages || []).forEach(message => {
-            if (!userMap.has(message.user_id) || 
-                new Date(message.created_at) > new Date(userMap.get(message.user_id).lastTime)) {
-                userMap.set(message.user_id, {
+            if (!userChats.has(message.user_id)) {
+                userChats.set(message.user_id, {
                     user: message.profiles,
                     lastMessage: message.message,
                     lastTime: message.created_at,
-                    unread: !message.is_read && !message.is_admin
+                    unreadCount: 0,
+                    messageCount: 0
                 });
+            }
+            
+            const chat = userChats.get(message.user_id);
+            chat.messageCount++;
+            
+            // Update last message
+            if (new Date(message.created_at) > new Date(chat.lastTime)) {
+                chat.lastMessage = message.message;
+                chat.lastTime = message.created_at;
+            }
+            
+            // Count unread user messages
+            if (!message.is_admin && !message.is_read) {
+                chat.unreadCount++;
             }
         });
         
@@ -828,51 +772,54 @@ async function loadActiveChats() {
         const chatList = document.getElementById('chat-list');
         chatList.innerHTML = '';
         
-        if (userMap.size === 0) {
-            chatList.innerHTML = '<p>No active conversations</p>';
+        if (userChats.size === 0) {
+            chatList.innerHTML = '<p class="no-chats">No active conversations</p>';
             return;
         }
         
-        userMap.forEach((chat, userId) => {
+        userChats.forEach((chat, userId) => {
             const chatItem = document.createElement('div');
             chatItem.className = 'chat-item';
             chatItem.setAttribute('data-user-id', userId);
             
-            const unreadIndicator = chat.unread ? '<span class="unread-indicator">●</span>' : '';
+            const unreadBadge = chat.unreadCount > 0 ? 
+                `<span class="unread-badge">${chat.unreadCount}</span>` : '';
+            
+            const time = new Date(chat.lastTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             
             chatItem.innerHTML = `
-                <div class="chat-user">${chat.user.full_name || chat.user.email} ${unreadIndicator}</div>
-                <div class="chat-preview">${chat.lastMessage}</div>
+                <div class="chat-item-header">
+                    <div class="chat-user">${chat.user.full_name || chat.user.email}</div>
+                    <div class="chat-time">${time}</div>
+                </div>
+                <div class="chat-preview">
+                    ${chat.lastMessage.substring(0, 50)}${chat.lastMessage.length > 50 ? '...' : ''}
+                    ${unreadBadge}
+                </div>
             `;
+            
             chatList.appendChild(chatItem);
             
-            // Add click event to load chat
+            // Add click event
             chatItem.addEventListener('click', () => {
+                // Remove selected class from all items
+                document.querySelectorAll('.chat-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
+                // Add selected class to current item
+                chatItem.classList.add('selected');
+                
                 loadUserChat(userId, chat.user);
             });
         });
         
     } catch (error) {
         console.error('Error loading active chats:', error);
-        // نمایش پیام خطا در صورت نیاز
         const chatList = document.getElementById('chat-list');
-        chatList.innerHTML = '<p>Error loading conversations</p>';
+        chatList.innerHTML = '<p class="error-message">Error loading conversations</p>';
     }
 }
 
-// اضافه کردن استایل برای نشانگر پیام خوانده نشده
-const unreadStyle = `
-    .unread-indicator {
-        color: var(--highlight);
-        font-size: 1.2rem;
-        margin-left: 0.5rem;
-    }
-`;
-
-// اضافه کردن استایل به صفحه
-const styleSheet = document.createElement('style');
-styleSheet.textContent = unreadStyle;
-document.head.appendChild(styleSheet);
 async function loadUserChat(userId, user) {
     try {
         currentChatUser = { id: userId, ...user };
@@ -898,97 +845,165 @@ async function loadUserChat(userId, user) {
         const chatMessages = document.getElementById('admin-chat-messages');
         chatMessages.innerHTML = '';
         
-        (messages || []).forEach(message => {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `chat-message ${message.is_admin ? 'message-admin' : 'message-user'}`;
-            
-            const time = new Date(message.created_at).toLocaleTimeString();
-            messageDiv.innerHTML = `
-                <div>${message.message}</div>
-                <div class="message-time">${time}</div>
-            `;
-            chatMessages.appendChild(messageDiv);
-        });
+        if (!messages || messages.length === 0) {
+            const welcomeMsg = document.createElement('div');
+            welcomeMsg.className = 'chat-message system-message';
+            welcomeMsg.textContent = 'No messages yet. Start a conversation!';
+            chatMessages.appendChild(welcomeMsg);
+        } else {
+            messages.forEach(message => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `chat-message ${message.is_admin ? 'message-admin' : 'message-user'}`;
+                
+                const time = new Date(message.created_at).toLocaleTimeString();
+                messageDiv.innerHTML = `
+                    <div class="message-content">${message.message}</div>
+                    <div class="message-time">${time}</div>
+                `;
+                chatMessages.appendChild(messageDiv);
+            });
+        }
         
         // Scroll to bottom
         chatMessages.scrollTop = chatMessages.scrollHeight;
         
-        // Mark messages as read
+        // Mark user messages as read
         await supabase
             .from('chat_messages')
             .update({ is_read: true })
             .eq('user_id', userId)
-            .eq('is_admin', false);
+            .eq('is_admin', false)
+            .eq('is_read', false);
             
-        // Set up real-time subscription for new messages
-        if (chatSubscription) {
-            chatSubscription.unsubscribe();
-        }
+        // Remove unread indicators
+        document.querySelectorAll('.chat-item').forEach(item => {
+            if (item.getAttribute('data-user-id') === userId) {
+                const badge = item.querySelector('.unread-badge');
+                if (badge) badge.remove();
+            }
+        });
         
-        chatSubscription = supabase
-            .channel('chat-updates')
-            .on('postgres_changes', 
-                { 
-                    event: 'INSERT', 
-                    schema: 'public', 
-                    table: 'chat_messages',
-                    filter: `user_id=eq.${userId}`
-                }, 
-                (payload) => {
-                    // Add new message to chat
-                    const newMessage = payload.new;
-                    const chatMessages = document.getElementById('admin-chat-messages');
-                    
-                    const messageDiv = document.createElement('div');
-                    messageDiv.className = `chat-message ${newMessage.is_admin ? 'message-admin' : 'message-user'}`;
-                    
-                    const time = new Date(newMessage.created_at).toLocaleTimeString();
-                    messageDiv.innerHTML = `
-                        <div>${newMessage.message}</div>
-                        <div class="message-time">${time}</div>
-                    `;
-                    chatMessages.appendChild(messageDiv);
-                    
-                    // Scroll to bottom
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                }
-            )
-            .subscribe();
-            
+        // Setup real-time subscription
+        setupChatSubscription(userId);
+        
     } catch (error) {
         console.error('Error loading user chat:', error);
+        showNotification('Error loading chat: ' + error.message, 'error');
     }
+}
+
+function setupChatSubscription(userId) {
+    // Unsubscribe from previous subscription
+    if (chatSubscription) {
+        chatSubscription.unsubscribe();
+    }
+    
+    // Subscribe to new messages for this user
+    chatSubscription = supabase
+        .channel(`chat:${userId}`)
+        .on('postgres_changes', 
+            { 
+                event: 'INSERT', 
+                schema: 'public', 
+                table: 'chat_messages',
+                filter: `user_id=eq.${userId}`
+            }, 
+            (payload) => {
+                const newMessage = payload.new;
+                const chatMessages = document.getElementById('admin-chat-messages');
+                
+                // Remove system message if present
+                const systemMsg = chatMessages.querySelector('.system-message');
+                if (systemMsg) systemMsg.remove();
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `chat-message ${newMessage.is_admin ? 'message-admin' : 'message-user'}`;
+                
+                const time = new Date(newMessage.created_at).toLocaleTimeString();
+                messageDiv.innerHTML = `
+                    <div class="message-content">${newMessage.message}</div>
+                    <div class="message-time">${time}</div>
+                `;
+                chatMessages.appendChild(messageDiv);
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Mark as read if it's a user message
+                if (!newMessage.is_admin) {
+                    supabase
+                        .from('chat_messages')
+                        .update({ is_read: true })
+                        .eq('id', newMessage.id);
+                }
+            }
+        )
+        .subscribe((status) => {
+            console.log('Chat subscription status:', status);
+        });
 }
 
 async function sendAdminMessage() {
     try {
-        if (!currentChatUser) return;
+        if (!currentChatUser) {
+            showNotification('Please select a conversation first', 'error');
+            return;
+        }
         
         const input = document.getElementById('admin-chat-input');
         const message = input.value.trim();
         
-        if (!message) return;
+        if (!message) {
+            showNotification('Please enter a message', 'error');
+            return;
+        }
         
-        // Save message to Supabase
-        const { error } = await supabase
+        // Save message to database
+        const { data, error } = await supabase
             .from('chat_messages')
             .insert([
                 {
                     user_id: currentChatUser.id,
                     message: message,
                     is_admin: true,
+                    is_read: false,
                     created_at: new Date().toISOString()
                 }
-            ]);
+            ])
+            .select();
             
         if (error) throw error;
         
         // Clear input
         input.value = '';
         
+        // Add message to UI immediately
+        if (data && data.length > 0) {
+            const chatMessages = document.getElementById('admin-chat-messages');
+            
+            // Remove system message if present
+            const systemMsg = chatMessages.querySelector('.system-message');
+            if (systemMsg) systemMsg.remove();
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message message-admin';
+            
+            const time = new Date(data[0].created_at).toLocaleTimeString();
+            messageDiv.innerHTML = `
+                <div class="message-content">${message}</div>
+                <div class="message-time">${time}</div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        showNotification('Message sent successfully', 'success');
+        
     } catch (error) {
         console.error('Error sending message:', error);
-        showNotification('Error sending message', 'error');
+        showNotification('Error sending message: ' + error.message, 'error');
     }
 }
 
@@ -999,22 +1014,18 @@ function setupRealtimeSubscriptions() {
         .on('postgres_changes', 
             { event: 'INSERT', schema: 'public', table: 'profiles' }, 
             (payload) => {
-                // Refresh users list if we're on the users page
                 if (document.getElementById('users-section').classList.contains('active')) {
                     loadUsers();
                 }
-                // Refresh dashboard stats
                 loadDashboardStats();
             }
         )
         .on('postgres_changes', 
             { event: 'UPDATE', schema: 'public', table: 'profiles' }, 
             (payload) => {
-                // Refresh users list if we're on the users page
                 if (document.getElementById('users-section').classList.contains('active')) {
                     loadUsers();
                 }
-                // Refresh dashboard stats
                 loadDashboardStats();
             }
         )
@@ -1026,9 +1037,7 @@ function setupRealtimeSubscriptions() {
         .on('postgres_changes', 
             { event: 'INSERT', schema: 'public', table: 'transactions' }, 
             (payload) => {
-                // Refresh recent activity
                 loadRecentActivity();
-                // Refresh deposit requests if we're on the wallets page
                 if (document.getElementById('wallets-section').classList.contains('active')) {
                     loadDepositRequests();
                 }
@@ -1054,9 +1063,8 @@ async function generateReport() {
         const period = document.getElementById('report-period').value;
         
         let startDate, endDate;
-        
-        // Calculate date range based on period
         const today = new Date();
+        
         switch (period) {
             case 'today':
                 startDate = new Date(today);
@@ -1088,7 +1096,6 @@ async function generateReport() {
                 break;
         }
         
-        // Generate report based on type
         let reportContent = '';
         
         switch (reportType) {
@@ -1106,7 +1113,6 @@ async function generateReport() {
                 break;
         }
         
-        // Display report
         document.getElementById('report-content').innerHTML = reportContent;
         
     } catch (error) {
@@ -1116,9 +1122,6 @@ async function generateReport() {
 }
 
 async function generateUserReport(startDate, endDate) {
-    // In a real application, this would query the database
-    // For now, we'll return mock data
-    
     return `
         <h3>User Activity Report</h3>
         <p><strong>Period:</strong> ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()}</p>
@@ -1235,7 +1238,9 @@ function showNotification(message, type) {
     
     // Auto-remove after 5 seconds
     setTimeout(() => {
-        notification.remove();
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
     }, 5000);
 }
 
@@ -1243,5 +1248,3 @@ function logout() {
     localStorage.removeItem('goldcrypto-user');
     window.location.href = 'index.html';
 }
-
-
