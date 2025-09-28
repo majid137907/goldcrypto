@@ -220,12 +220,12 @@ async function loadRecentActivity() {
         
         // Combine and sort activities
         const activities = [
-            ...transactions.map(t => ({
+            ...(transactions || []).map(t => ({
                 type: 'Transaction',
                 description: `${t.type} - $${t.amount}`,
                 time: new Date(t.created_at).toLocaleString()
             })),
-            ...trades.map(t => ({
+            ...(trades || []).map(t => ({
                 type: 'Trade',
                 description: `${t.symbol} ${t.type} - $${t.amount}`,
                 time: new Date(t.created_at).toLocaleString()
@@ -299,7 +299,7 @@ async function loadUsers() {
         const tableBody = document.getElementById('users-table-body');
         tableBody.innerHTML = '';
         
-        if (users.length === 0) {
+        if (!users || users.length === 0) {
             tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No users found</td></tr>';
             return;
         }
@@ -472,7 +472,7 @@ async function loadWalletSettings() {
         if (error) throw error;
         
         // Update UI
-        wallets.forEach(wallet => {
+        (wallets || []).forEach(wallet => {
             if (wallet.type === 'trc20') {
                 document.getElementById('trc20-address').value = wallet.address;
                 document.getElementById('trc20-status').value = wallet.is_active ? 'active' : 'inactive';
@@ -497,17 +497,41 @@ async function saveWalletSettings(type) {
             return;
         }
         
-        // Update wallet in Supabase
-        const { error } = await supabase
+        // Check if wallet exists
+        const { data: existingWallet, error: checkError } = await supabase
             .from('wallets')
-            .update({
-                address: address,
-                is_active: status,
-                updated_at: new Date().toISOString()
-            })
-            .eq('type', type);
+            .select('*')
+            .eq('type', type)
+            .single();
             
-        if (error) throw error;
+        if (checkError && checkError.code === 'PGRST116') {
+            // Wallet doesn't exist, create it
+            const { error } = await supabase
+                .from('wallets')
+                .insert([
+                    {
+                        type: type,
+                        address: address,
+                        is_active: status,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    }
+                ]);
+                
+            if (error) throw error;
+        } else {
+            // Wallet exists, update it
+            const { error } = await supabase
+                .from('wallets')
+                .update({
+                    address: address,
+                    is_active: status,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('type', type);
+                
+            if (error) throw error;
+        }
         
         showNotification(`${type.toUpperCase()} wallet settings saved successfully`, 'success');
         
@@ -536,7 +560,7 @@ async function loadDepositRequests() {
         const container = document.getElementById('deposit-requests');
         container.innerHTML = '';
         
-        if (deposits.length === 0) {
+        if (!deposits || deposits.length === 0) {
             container.innerHTML = '<p>No pending deposit requests</p>';
             return;
         }
@@ -771,7 +795,7 @@ async function loadActiveChats() {
         
         // Group messages by user
         const userChats = {};
-        messages.forEach(message => {
+        (messages || []).forEach(message => {
             if (!userChats[message.user_id]) {
                 userChats[message.user_id] = {
                     user: message.profiles,
@@ -837,7 +861,7 @@ async function loadUserChat(userId, user) {
         const chatMessages = document.getElementById('admin-chat-messages');
         chatMessages.innerHTML = '';
         
-        messages.forEach(message => {
+        (messages || []).forEach(message => {
             const messageDiv = document.createElement('div');
             messageDiv.className = `chat-message ${message.is_admin ? 'message-admin' : 'message-user'}`;
             
@@ -915,7 +939,8 @@ async function sendAdminMessage() {
                 {
                     user_id: currentChatUser.id,
                     message: message,
-                    is_admin: true
+                    is_admin: true,
+                    created_at: new Date().toISOString()
                 }
             ]);
             
@@ -1128,56 +1153,4 @@ async function generateFinancialReport(startDate, endDate) {
             </div>
             <div class="stat-card">
                 <h4>Net Flow</h4>
-                <div class="stat-value">$22,222</div>
-            </div>
-        </div>
-        
-        <h4>Revenue Breakdown</h4>
-        <ul>
-            <li>Trading Fees: $1,234</li>
-            <li>Withdrawal Fees: $567</li>
-            <li>Other Income: $89</li>
-            <li><strong>Total Revenue: $1,890</strong></li>
-        </ul>
-    `;
-}
-
-async function generateSystemReport(startDate, endDate) {
-    return `
-        <h3>System Performance Report</h3>
-        <p><strong>Period:</strong> ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()}</p>
-        
-        <h4>Uptime</h4>
-        <p>System uptime: 99.98%</p>
-        
-        <h4>Performance Metrics</h4>
-        <ul>
-            <li>Average response time: 128ms</li>
-            <li>Peak concurrent users: 234</li>
-            <li>API requests processed: 45,678</li>
-            <li>Data transferred: 2.3 GB</li>
-        </ul>
-        
-        <h4>Error Log</h4>
-        <p>No critical errors detected during this period.</p>
-    `;
-}
-
-function showNotification(message, type) {
-    const notificationArea = document.getElementById('notification-area');
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    
-    notificationArea.appendChild(notification);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        notification.remove();
-    }, 5000);
-}
-
-function logout() {
-    localStorage.removeItem('goldcrypto-user');
-    window.location.href = 'index.html';
-}
+                <div class="stat-value">$22,222
