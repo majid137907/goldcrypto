@@ -1234,3 +1234,23 @@ body {
         padding: 0.8rem 1rem;
     }
 }
+.error-message {
+    text-align: center;
+    padding: 2rem;
+    color: var(--danger);
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid var(--danger);
+    border-radius: var(--border-radius);
+    margin: 1rem;
+}
+
+.error-message button {
+    margin-top: 1rem;
+}
+
+.no-chats {
+    text-align: center;
+    padding: 2rem;
+    color: var(--silver);
+    font-style: italic;
+}
