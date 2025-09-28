@@ -795,6 +795,7 @@ function addMaintenanceLog(message) {
     log.scrollTop = log.scrollHeight;
 }
 
+// در تابع loadActiveChats اصلاحات زیر را اعمال کنید
 async function loadActiveChats() {
     try {
         // Get users with recent chat messages
@@ -808,16 +809,18 @@ async function loadActiveChats() {
             
         if (error) throw error;
         
-        // Group messages by user
-        const userChats = {};
+        // Group messages by user and get the latest message for each user
+        const userMap = new Map();
+        
         (messages || []).forEach(message => {
-            if (!userChats[message.user_id]) {
-                userChats[message.user_id] = {
+            if (!userMap.has(message.user_id) || 
+                new Date(message.created_at) > new Date(userMap.get(message.user_id).lastTime)) {
+                userMap.set(message.user_id, {
                     user: message.profiles,
                     lastMessage: message.message,
                     lastTime: message.created_at,
-                    unread: !message.is_admin
-                };
+                    unread: !message.is_read && !message.is_admin
+                });
             }
         });
         
@@ -825,32 +828,51 @@ async function loadActiveChats() {
         const chatList = document.getElementById('chat-list');
         chatList.innerHTML = '';
         
-        if (Object.keys(userChats).length === 0) {
+        if (userMap.size === 0) {
             chatList.innerHTML = '<p>No active conversations</p>';
             return;
         }
         
-        Object.values(userChats).forEach(chat => {
+        userMap.forEach((chat, userId) => {
             const chatItem = document.createElement('div');
             chatItem.className = 'chat-item';
-            chatItem.setAttribute('data-user-id', chat.user.id);
+            chatItem.setAttribute('data-user-id', userId);
+            
+            const unreadIndicator = chat.unread ? '<span class="unread-indicator">●</span>' : '';
+            
             chatItem.innerHTML = `
-                <div class="chat-user">${chat.user.full_name || chat.user.email}</div>
+                <div class="chat-user">${chat.user.full_name || chat.user.email} ${unreadIndicator}</div>
                 <div class="chat-preview">${chat.lastMessage}</div>
             `;
             chatList.appendChild(chatItem);
             
             // Add click event to load chat
             chatItem.addEventListener('click', () => {
-                loadUserChat(chat.user.id, chat.user);
+                loadUserChat(userId, chat.user);
             });
         });
         
     } catch (error) {
         console.error('Error loading active chats:', error);
+        // نمایش پیام خطا در صورت نیاز
+        const chatList = document.getElementById('chat-list');
+        chatList.innerHTML = '<p>Error loading conversations</p>';
     }
 }
 
+// اضافه کردن استایل برای نشانگر پیام خوانده نشده
+const unreadStyle = `
+    .unread-indicator {
+        color: var(--highlight);
+        font-size: 1.2rem;
+        margin-left: 0.5rem;
+    }
+`;
+
+// اضافه کردن استایل به صفحه
+const styleSheet = document.createElement('style');
+styleSheet.textContent = unreadStyle;
+document.head.appendChild(styleSheet);
 async function loadUserChat(userId, user) {
     try {
         currentChatUser = { id: userId, ...user };
@@ -1221,4 +1243,5 @@ function logout() {
     localStorage.removeItem('goldcrypto-user');
     window.location.href = 'index.html';
 }
+
 
