@@ -119,6 +119,10 @@ function setupEventListeners() {
     
     // Chat functionality
     setupChatWidget();
+    
+    // Email verification handling
+    document.getElementById('verify-code').addEventListener('click', verifyWithdrawalCode);
+    document.getElementById('resend-code').addEventListener('click', resendVerificationCode);
 }
 
 function showSection(section) {
@@ -139,6 +143,8 @@ function showSection(section) {
     // Load section-specific data
     if (section === 'trade') {
         updateTradeChart();
+    } else if (section === 'wallet') {
+        loadWalletAddresses();
     }
 }
 
@@ -232,7 +238,11 @@ async function loadWalletAddresses() {
             .eq('is_active', true)
             .single();
             
-        if (error) throw error;
+        if (error) {
+            // If no wallet found, show default message
+            document.getElementById('deposit-address').textContent = 'Wallet address not configured. Please contact support.';
+            return;
+        }
         
         document.getElementById('deposit-address').textContent = data.address;
         
@@ -244,9 +254,13 @@ async function loadWalletAddresses() {
 
 function copyDepositAddress() {
     const address = document.getElementById('deposit-address').textContent;
-    navigator.clipboard.writeText(address).then(() => {
-        alert('Address copied to clipboard!');
-    });
+    if (address && !address.includes('Error') && !address.includes('not configured')) {
+        navigator.clipboard.writeText(address).then(() => {
+            alert('Address copied to clipboard!');
+        });
+    } else {
+        alert('Cannot copy invalid address');
+    }
 }
 
 async function loadTransactionHistory() {
@@ -265,11 +279,11 @@ async function loadTransactionHistory() {
         const historyContainer = document.getElementById('transaction-history');
         historyContainer.innerHTML = '';
         
-        let transactions = data;
+        let transactions = data || [];
         
         // Apply filter if not "all"
         if (filter !== 'all') {
-            transactions = data.filter(t => t.type === filter);
+            transactions = transactions.filter(t => t.type === filter);
         }
         
         if (transactions.length === 0) {
@@ -318,7 +332,7 @@ async function loadOpenTrades() {
         const tradesContainer = document.getElementById('open-trades-list');
         tradesContainer.innerHTML = '';
         
-        if (data.length === 0) {
+        if (!data || data.length === 0) {
             tradesContainer.innerHTML = '<p>No open trades.</p>';
             return;
         }
@@ -479,7 +493,8 @@ async function executeTrade() {
                     amount: amount,
                     price: price,
                     leverage: leverage,
-                    status: 'open'
+                    status: 'open',
+                    created_at: new Date().toISOString()
                 }
             ])
             .select();
@@ -568,7 +583,8 @@ async function closeTrade(tradeId) {
                         symbol: trade.symbol,
                         type: trade.type,
                         leverage: trade.leverage
-                    }
+                    },
+                    created_at: new Date().toISOString()
                 }
             ]);
             
@@ -652,7 +668,7 @@ async function handleTransfer(e) {
         // Check if recipient exists and has premium level
         const { data: recipient, error: recipientError } = await supabase
             .from('profiles')
-            .select('id, level')
+            .select('id, level, balance')
             .eq('email', recipientEmail)
             .single();
             
@@ -686,7 +702,7 @@ async function handleTransfer(e) {
         // Update recipient balance
         const { error: recipientUpdateError } = await supabase
             .from('profiles')
-            .update({ balance: recipient.balance + amount })
+            .update({ balance: (recipient.balance || 0) + amount })
             .eq('id', recipient.id);
             
         if (recipientUpdateError) throw recipientUpdateError;
@@ -703,7 +719,8 @@ async function handleTransfer(e) {
                     details: {
                         recipient: recipientEmail,
                         note: 'Internal transfer'
-                    }
+                    },
+                    created_at: new Date().toISOString()
                 }
             ]);
             
@@ -721,7 +738,8 @@ async function handleTransfer(e) {
                     details: {
                         sender: userData.email,
                         note: 'Internal transfer received'
-                    }
+                    },
+                    created_at: new Date().toISOString()
                 }
             ]);
             
@@ -751,7 +769,10 @@ async function updatePersonalInfo(e) {
         // Update user profile in Supabase
         const { error } = await supabase
             .from('profiles')
-            .update({ full_name: name })
+            .update({ 
+                full_name: name,
+                updated_at: new Date().toISOString()
+            })
             .eq('id', userData.id);
             
         if (error) throw error;
@@ -940,7 +961,8 @@ function sendMessage() {
                 {
                     user_id: userData.id,
                     message: message,
-                    is_admin: false
+                    is_admin: false,
+                    created_at: new Date().toISOString()
                 }
             ])
             .then(({ error }) => {
@@ -962,7 +984,8 @@ function sendMessage() {
                     {
                         user_id: userData.id,
                         message: 'Thank you for your message. Our support team will respond shortly.',
-                        is_admin: true
+                        is_admin: true,
+                        created_at: new Date().toISOString()
                     }
                 ])
                 .then(({ error }) => {
@@ -992,7 +1015,7 @@ function logout() {
 }
 
 // Email verification handling
-document.getElementById('verify-code').addEventListener('click', async function() {
+async function verifyWithdrawalCode() {
     const code = document.getElementById('verification-code').value;
     
     if (!code) {
@@ -1014,12 +1037,13 @@ document.getElementById('verify-code').addEventListener('click', async function(
                     {
                         user_id: userData.id,
                         type: 'withdrawal',
-                        amount: -withdrawal.amount,
+                        amount: -parseFloat(withdrawal.amount),
                         status: 'pending',
                         details: {
                             address: withdrawal.address,
                             method: withdrawal.method
-                        }
+                        },
+                        created_at: new Date().toISOString()
                     }
                 ]);
                 
@@ -1040,8 +1064,8 @@ document.getElementById('verify-code').addEventListener('click', async function(
     } else {
         alert('Invalid verification code');
     }
-});
+}
 
-document.getElementById('resend-code').addEventListener('click', function() {
+function resendVerificationCode() {
     alert('Verification code has been resent to your email.');
-});
+}
