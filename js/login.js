@@ -147,7 +147,7 @@ async function handleLogin(e) {
     submitButton.disabled = true;
     
     try {
-        // Step 1: لاگین کاربر
+        // Step 1: Login user
         const { data, error } = await supabase.auth.signInWithPassword({
             email: email,
             password: password
@@ -155,7 +155,7 @@ async function handleLogin(e) {
         
         if (error) throw error;
         
-        // Step 2: بررسی تأیید ایمیل (اگر نیاز باشد)
+        // Step 2: Check email verification (if needed)
         if (data.user && !data.user.email_confirmed_at) {
             showMessage(messageEl, 
                 'Please verify your email address. ' +
@@ -176,18 +176,13 @@ async function handleLogin(e) {
             return;
         }
         
-        // Step 3: اطمینان از وجود پروفایل
-        const { data: profileData, error: profileError } = await supabase.rpc('create_user_profile', {
-            p_user_id: data.user.id,
-            p_user_email: data.user.email
-        });
+        // Step 3: Ensure profile exists
+        await ensureUserProfile(data.user.id, data.user.email);
         
-        if (profileError) throw profileError;
+        // Step 4: Update last login time
+        await updateLastLogin(data.user.id);
         
-        // Step 4: آپدیت زمان آخرین لاگین
-        await supabase.rpc('update_last_login', { p_user_id: data.user.id });
-        
-        // Step 5: گرفتن اطلاعات کامل پروفایل
+        // Step 5: Get complete profile information
         const { data: profile, error: getProfileError } = await supabase
             .from('profiles')
             .select('*')
@@ -196,7 +191,7 @@ async function handleLogin(e) {
             
         if (getProfileError) throw getProfileError;
         
-        // Step 6: ذخیره اطلاعات کاربر
+        // Step 6: Save user information
         localStorage.setItem('goldcrypto-user', JSON.stringify({
             id: data.user.id,
             email: data.user.email,
@@ -206,7 +201,7 @@ async function handleLogin(e) {
             is_active: profile.is_active !== false
         }));
         
-        // Step 7: انتقال به صفحه کاربر
+        // Step 7: Redirect to user page
         showMessage(messageEl, 'Login successful! Redirecting...', 'success');
         
         setTimeout(() => {
@@ -219,9 +214,9 @@ async function handleLogin(e) {
         let errorMessage = error.message;
         
         if (error.message.includes('Invalid login credentials')) {
-            errorMessage = 'ایمیل یا رمز عبور اشتباه است.';
+            errorMessage = 'Invalid email or password.';
         } else if (error.message.includes('Email not confirmed')) {
-            errorMessage = 'لطفاً ابتدا ایمیل خود را تأیید کنید.';
+            errorMessage = 'Please verify your email first.';
         }
         
         showMessage(messageEl, errorMessage, 'error');
@@ -231,6 +226,57 @@ async function handleLogin(e) {
         submitButton.disabled = false;
     }
 }
+
+async function ensureUserProfile(userId, userEmail) {
+    try {
+        // Check if profile exists
+        const { data: existingProfile, error: checkError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', userId)
+            .single();
+            
+        if (checkError && checkError.code === 'PGRST116') {
+            // Profile doesn't exist, create one
+            const { error: insertError } = await supabase
+                .from('profiles')
+                .insert([
+                    {
+                        id: userId,
+                        email: userEmail,
+                        level: 'gold',
+                        balance: 0,
+                        is_active: true,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    }
+                ]);
+                
+            if (insertError) throw insertError;
+        }
+    } catch (error) {
+        console.error('Error ensuring user profile:', error);
+        throw error;
+    }
+}
+
+async function updateLastLogin(userId) {
+    try {
+        const { error } = await supabase
+            .from('profiles')
+            .update({ 
+                last_login: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', userId);
+            
+        if (error) throw error;
+    } catch (error) {
+        console.error('Error updating last login:', error);
+        // Don't throw error here as it's not critical
+    }
+}
+
 async function handleSignup(e) {
     e.preventDefault();
     
@@ -259,7 +305,7 @@ async function handleSignup(e) {
     submitButton.disabled = true;
     
     try {
-        // Step 1: ثبت‌نام کاربر در سیستم احراز هویت
+        // Step 1: Register user in authentication system
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email: email,
             password: password,
@@ -274,26 +320,15 @@ async function handleSignup(e) {
         if (authError) throw authError;
         
         if (authData.user) {
-            // Step 2: ایجاد پروفایل کاربر با استفاده از تابع
-            const { data: functionData, error: functionError } = await supabase.rpc('create_user_profile', {
-                p_user_id: authData.user.id,
-                p_user_email: authData.user.email,
-                p_full_name: name
-            });
+            // Step 2: Create user profile
+            await ensureUserProfile(authData.user.id, authData.user.email, name);
             
-            if (functionError) throw functionError;
-            
-            // بررسی نتیجه تابع
-            if (functionData && functionData.status === 'error') {
-                throw new Error(functionData.message);
-            }
-            
-            // Step 3: بر اساس وضعیت ایمیل تأیید عمل کن
+            // Step 3: Act based on email verification status
             if (authData.session) {
-                // ایمیل تأیید نیاز نیست - کاربر لاگین شده
+                // Email verification not needed - user is logged in
                 showMessage(messageEl, 'Account created successfully! Redirecting...', 'success');
                 
-                // ذخیره اطلاعات کاربر
+                // Save user information
                 localStorage.setItem('goldcrypto-user', JSON.stringify({
                     id: authData.user.id,
                     email: authData.user.email,
@@ -303,22 +338,22 @@ async function handleSignup(e) {
                     is_active: true
                 }));
                 
-                // انتقال به صفحه کاربر
+                // Redirect to user page
                 setTimeout(() => {
                     window.location.href = 'user.html';
                 }, 2000);
                 
             } else {
-                // ایمیل تأیید نیاز است
+                // Email verification required
                 showMessage(messageEl, 
                     'Account created successfully! Please check your email for verification link.', 
                     'success'
                 );
                 
-                // پاک کردن فرم
+                // Clear form
                 form.reset();
                 
-                // انتقال به تب لاگین بعد از 5 ثانیه
+                // Switch to login tab after 5 seconds
                 setTimeout(() => {
                     document.querySelector('[data-tab="login"]').click();
                 }, 5000);
@@ -328,17 +363,17 @@ async function handleSignup(e) {
     } catch (error) {
         console.error('Signup error:', error);
         
-        // نمایش خطای فارسی برای کاربر
+        // Display user-friendly error messages
         let errorMessage = error.message;
         
         if (error.message.includes('duplicate key') || error.message.includes('already exists')) {
-            errorMessage = 'این ایمیل قبلاً ثبت شده است.';
+            errorMessage = 'This email is already registered.';
         } else if (error.message.includes('password')) {
-            errorMessage = 'رمز عبور باید حداقل ۶ کاراکتر باشد.';
+            errorMessage = 'Password must be at least 6 characters.';
         } else if (error.message.includes('email')) {
-            errorMessage = 'ایمیل معتبر نیست.';
+            errorMessage = 'Invalid email address.';
         } else if (error.message.includes('row-level security policy')) {
-            errorMessage = 'خطای سیستم. لطفاً دوباره تلاش کنید.';
+            errorMessage = 'System error. Please try again.';
         }
         
         showMessage(messageEl, errorMessage, 'error');
@@ -348,6 +383,7 @@ async function handleSignup(e) {
         submitButton.disabled = false;
     }
 }
+
 async function handleAdminLogin(e) {
     e.preventDefault();
     
@@ -365,6 +401,9 @@ async function handleAdminLogin(e) {
     try {
         // Check if credentials match admin credentials
         if (email === 'admin@gmail.com' && password === '@dmin2461218311020') {
+            // Create or get admin profile
+            await ensureAdminProfile();
+            
             // Store admin data in localStorage
             localStorage.setItem('goldcrypto-user', JSON.stringify({
                 id: 'admin',
@@ -391,6 +430,40 @@ async function handleAdminLogin(e) {
         // Reset button
         submitButton.textContent = originalText;
         submitButton.disabled = false;
+    }
+}
+
+async function ensureAdminProfile() {
+    try {
+        // Check if admin profile exists
+        const { data: existingAdmin, error: checkError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', 'admin@gmail.com')
+            .single();
+            
+        if (checkError && checkError.code === 'PGRST116') {
+            // Admin profile doesn't exist, create one
+            const { error: insertError } = await supabase
+                .from('profiles')
+                .insert([
+                    {
+                        id: 'admin',
+                        email: 'admin@gmail.com',
+                        full_name: 'Administrator',
+                        level: 'admin',
+                        balance: 0,
+                        is_active: true,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    }
+                ]);
+                
+            if (insertError) throw insertError;
+        }
+    } catch (error) {
+        console.error('Error ensuring admin profile:', error);
+        throw error;
     }
 }
 
@@ -432,7 +505,7 @@ async function handlePasswordReset(e) {
 }
 
 function showMessage(element, text, type) {
-    element.textContent = text;
+    element.innerHTML = text;
     element.className = `message ${type}`;
     element.style.display = 'block';
     
@@ -457,9 +530,9 @@ function checkAuthStatus() {
             window.location.href = 'user.html';
         }
     }
-
 }
-// تابع برای ارسال مجدد ایمیل تأیید
+
+// Function to resend verification email
 async function resendVerificationEmail(email) {
     try {
         const { error } = await supabase.auth.resend({
