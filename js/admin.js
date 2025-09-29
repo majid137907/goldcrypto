@@ -1348,4 +1348,207 @@ function logout() {
     window.location.href = 'index.html';
 }
 
+// اضافه کردن تابع جدید برای بررسی دسترسی ادمین
+async function verifyAdminAccess() {
+    try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            throw new Error('Authentication required');
+        }
+        
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+            
+        if (profileError || !profile || profile.level !== 'admin') {
+            throw new Error('Admin access required');
+        }
+        
+        return { user, profile };
+    } catch (error) {
+        console.error('Admin access verification failed:', error);
+        throw error;
+    }
+}
+
+// اصلاح تابع saveUserChanges
+async function saveUserChanges(e) {
+    e.preventDefault();
+    
+    try {
+        // بررسی دسترسی ادمین
+        await verifyAdminAccess();
+        
+        const userId = document.getElementById('edit-user-id').value;
+        const name = document.getElementById('edit-user-name').value;
+        const level = document.getElementById('edit-user-level').value;
+        const balance = parseFloat(document.getElementById('edit-user-balance').value);
+        const status = document.getElementById('edit-user-status').value === 'active';
+        
+        const { error } = await supabase
+            .from('profiles')
+            .update({
+                full_name: name,
+                level: level,
+                balance: balance,
+                is_active: status,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', userId);
+            
+        if (error) throw error;
+        
+        document.getElementById('user-edit-modal').style.display = 'none';
+        loadUsers();
+        showNotification('User updated successfully', 'success');
+        
+    } catch (error) {
+        console.error('Error updating user:', error);
+        showNotification('Error updating user: ' + error.message, 'error');
+    }
+}
+
+// اصلاح تابع deleteUserConfirmed
+async function deleteUserConfirmed() {
+    try {
+        // بررسی دسترسی ادمین
+        await verifyAdminAccess();
+        
+        const userId = window.pendingDeleteUserId;
+        
+        const { error } = await supabase
+            .from('profiles')
+            .delete()
+            .eq('id', userId);
+            
+        if (error) throw error;
+        
+        document.getElementById('confirmation-modal').style.display = 'none';
+        loadUsers();
+        showNotification('User deleted successfully', 'success');
+        
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        showNotification('Error deleting user: ' + error.message, 'error');
+    }
+}
+
+// اصلاح تابع sendAdminMessage
+async function sendAdminMessage() {
+    try {
+        // بررسی دسترسی ادمین
+        await verifyAdminAccess();
+        
+        if (!currentChatUser) {
+            showNotification('Please select a conversation first', 'error');
+            return;
+        }
+        
+        const input = document.getElementById('admin-chat-input');
+        const message = input.value.trim();
+        
+        if (!message) {
+            showNotification('Please enter a message', 'error');
+            return;
+        }
+        
+        // Save message to database
+        const { data, error } = await supabase
+            .from('chat_messages')
+            .insert([
+                {
+                    user_id: currentChatUser.id,
+                    message: message,
+                    is_admin: true,
+                    is_read: false,
+                    created_at: new Date().toISOString()
+                }
+            ])
+            .select();
+            
+        if (error) throw error;
+        
+        // Clear input
+        input.value = '';
+        
+        // Add message to UI immediately
+        if (data && data.length > 0) {
+            const chatMessages = document.getElementById('admin-chat-messages');
+            
+            // Remove system message if present
+            const systemMsg = chatMessages.querySelector('.system-message');
+            if (systemMsg) systemMsg.remove();
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message message-admin';
+            
+            const time = new Date(data[0].created_at).toLocaleTimeString();
+            messageDiv.innerHTML = `
+                <div class="message-content">${message}</div>
+                <div class="message-time">${time}</div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        showNotification('Message sent successfully', 'success');
+        
+    } catch (error) {
+        console.error('Error sending message:', error);
+        showNotification('Error sending message: ' + error.message, 'error');
+    }
+}
+
+// اضافه کردن تابع برای ایجاد جدول chat_messages اگر وجود ندارد
+async function ensureChatTable() {
+    try {
+        // Try to insert a test message to check if table exists
+        const { error } = await supabase
+            .from('chat_messages')
+            .insert([
+                {
+                    user_id: adminData.id,
+                    message: 'Test message',
+                    is_admin: true,
+                    is_read: false,
+                    created_at: new Date().toISOString()
+                }
+            ]);
+            
+        if (error && error.code === '42P01') {
+            // Table doesn't exist
+            showNotification('Chat table does not exist. Please create it in Supabase.', 'error');
+            return false;
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error checking chat table:', error);
+        return false;
+    }
+}
+
+// در تابع initAdminPanel، بررسی جدول چت را اضافه کنید
+async function initAdminPanel() {
+    await checkAdminAuth();
+    
+    // بررسی وجود جدول چت
+    const chatTableExists = await ensureChatTable();
+    if (!chatTableExists) {
+        showNotification('Chat system is not properly configured', 'error');
+    }
+    
+    setupAdminEventListeners();
+    loadDashboardStats();
+    loadRecentActivity();
+    loadUsers();
+    loadWalletSettings();
+    loadSystemSettings();
+    loadActiveChats();
+    setupRealtimeSubscriptions();
+}
 
