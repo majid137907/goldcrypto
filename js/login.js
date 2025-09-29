@@ -155,34 +155,13 @@ async function handleLogin(e) {
         
         if (error) throw error;
         
-        // Step 2: Check email verification (if needed)
-        if (data.user && !data.user.email_confirmed_at) {
-            showMessage(messageEl, 
-                'Please verify your email address. ' +
-                '<a href="#" id="resend-verification" style="color: #d4af37; text-decoration: underline;">Resend verification email</a>', 
-                'error'
-            );
-            
-            setTimeout(() => {
-                const resendLink = document.getElementById('resend-verification');
-                if (resendLink) {
-                    resendLink.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        resendVerificationEmail(email);
-                    });
-                }
-            }, 100);
-            
-            return;
-        }
-        
-        // Step 3: Ensure profile exists
+        // Step 2: Ensure profile exists
         await ensureUserProfile(data.user.id, data.user.email);
         
-        // Step 4: Update last login time
+        // Step 3: Update last login time
         await updateLastLogin(data.user.id);
         
-        // Step 5: Get complete profile information
+        // Step 4: Get complete profile information
         const { data: profile, error: getProfileError } = await supabase
             .from('profiles')
             .select('*')
@@ -191,7 +170,7 @@ async function handleLogin(e) {
             
         if (getProfileError) throw getProfileError;
         
-        // Step 6: Save user information
+        // Step 5: Save user information
         localStorage.setItem('goldcrypto-user', JSON.stringify({
             id: data.user.id,
             email: data.user.email,
@@ -201,7 +180,7 @@ async function handleLogin(e) {
             is_active: profile.is_active !== false
         }));
         
-        // Step 7: Redirect to user page
+        // Step 6: Redirect to user page
         showMessage(messageEl, 'Login successful! Redirecting...', 'success');
         
         setTimeout(() => {
@@ -215,8 +194,6 @@ async function handleLogin(e) {
         
         if (error.message.includes('Invalid login credentials')) {
             errorMessage = 'Invalid email or password.';
-        } else if (error.message.includes('Email not confirmed')) {
-            errorMessage = 'Please verify your email first.';
         }
         
         showMessage(messageEl, errorMessage, 'error');
@@ -305,15 +282,14 @@ async function handleSignup(e) {
     submitButton.disabled = true;
     
     try {
-        // Step 1: Register user in authentication system
+        // Step 1: Register user in authentication system - بدون نیاز به تایید ایمیل
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email: email,
             password: password,
             options: {
                 data: {
                     full_name: name
-                },
-                emailRedirectTo: `${window.location.origin}/login.html`
+                }
             }
         });
         
@@ -323,41 +299,30 @@ async function handleSignup(e) {
             // Step 2: Create user profile
             await ensureUserProfile(authData.user.id, authData.user.email, name);
             
-            // Step 3: Act based on email verification status
-            if (authData.session) {
-                // Email verification not needed - user is logged in
-                showMessage(messageEl, 'Account created successfully! Redirecting...', 'success');
-                
-                // Save user information
-                localStorage.setItem('goldcrypto-user', JSON.stringify({
-                    id: authData.user.id,
-                    email: authData.user.email,
-                    full_name: name,
-                    level: 'gold',
-                    balance: 0,
-                    is_active: true
-                }));
-                
-                // Redirect to user page
-                setTimeout(() => {
-                    window.location.href = 'user.html';
-                }, 2000);
-                
-            } else {
-                // Email verification required
-                showMessage(messageEl, 
-                    'Account created successfully! Please check your email for verification link.', 
-                    'success'
-                );
-                
-                // Clear form
-                form.reset();
-                
-                // Switch to login tab after 5 seconds
-                setTimeout(() => {
-                    document.querySelector('[data-tab="login"]').click();
-                }, 5000);
-            }
+            // Step 3: Sign in the user immediately after signup
+            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+            
+            if (signInError) throw signInError;
+            
+            // Step 4: Save user information
+            localStorage.setItem('goldcrypto-user', JSON.stringify({
+                id: signInData.user.id,
+                email: signInData.user.email,
+                full_name: name,
+                level: 'gold',
+                balance: 0,
+                is_active: true
+            }));
+            
+            showMessage(messageEl, 'Account created successfully! Redirecting...', 'success');
+            
+            // Step 5: Redirect to user page
+            setTimeout(() => {
+                window.location.href = 'user.html';
+            }, 2000);
         }
         
     } catch (error) {
@@ -384,7 +349,6 @@ async function handleSignup(e) {
     }
 }
 
-// جایگزین کردن تابع handleAdminLogin با این کد:
 async function handleAdminLogin(e) {
     e.preventDefault();
     
@@ -468,40 +432,6 @@ async function handleAdminLogin(e) {
     }
 }
 
-async function ensureAdminProfile() {
-    try {
-        // Check if admin profile exists
-        const { data: existingAdmin, error: checkError } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('email', 'admin@gmail.com')
-            .single();
-            
-        if (checkError && checkError.code === 'PGRST116') {
-            // Admin profile doesn't exist, create one
-            const { error: insertError } = await supabase
-                .from('profiles')
-                .insert([
-                    {
-                        id: 'admin',
-                        email: 'admin@gmail.com',
-                        full_name: 'Administrator',
-                        level: 'admin',
-                        balance: 0,
-                        is_active: true,
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
-                    }
-                ]);
-                
-            if (insertError) throw insertError;
-        }
-    } catch (error) {
-        console.error('Error ensuring admin profile:', error);
-        throw error;
-    }
-}
-
 async function handlePasswordReset(e) {
     e.preventDefault();
     
@@ -566,31 +496,3 @@ function checkAuthStatus() {
         }
     }
 }
-
-// Function to resend verification email
-async function resendVerificationEmail(email) {
-    try {
-        const { error } = await supabase.auth.resend({
-            type: 'signup',
-            email: email,
-            options: {
-                emailRedirectTo: `${window.location.origin}/login.html`
-            }
-        });
-        
-        if (error) throw error;
-        
-        showMessage(document.getElementById('login-message'), 
-            'Verification email sent! Please check your inbox.', 
-            'success'
-        );
-    } catch (error) {
-        console.error('Error resending verification:', error);
-        showMessage(document.getElementById('login-message'), 
-            'Error sending verification email: ' + error.message, 
-            'error'
-        );
-    }
-}
-
-
