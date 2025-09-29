@@ -184,7 +184,11 @@ async function handleLogin(e) {
         showMessage(messageEl, 'Login successful! Redirecting...', 'success');
         
         setTimeout(() => {
-            window.location.href = 'user.html';
+            if (profile.level === 'admin') {
+                window.location.href = 'admin.html';
+            } else {
+                window.location.href = 'user.html';
+            }
         }, 1500);
         
     } catch (error) {
@@ -204,7 +208,7 @@ async function handleLogin(e) {
     }
 }
 
-async function ensureUserProfile(userId, userEmail) {
+async function ensureUserProfile(userId, userEmail, name = '') {
     try {
         // Check if profile exists
         const { data: existingProfile, error: checkError } = await supabase
@@ -221,6 +225,7 @@ async function ensureUserProfile(userId, userEmail) {
                     {
                         id: userId,
                         email: userEmail,
+                        full_name: name,
                         level: 'gold',
                         balance: 0,
                         is_active: true,
@@ -290,6 +295,7 @@ async function handleSignup(e) {
                 data: {
                     full_name: name
                 }
+                // حذف ریدایرکت برای تایید ایمیل
             }
         });
         
@@ -319,7 +325,7 @@ async function handleSignup(e) {
             
             showMessage(messageEl, 'Account created successfully! Redirecting...', 'success');
             
-            // Step 5: Redirect to user page
+            // Redirect to user page
             setTimeout(() => {
                 window.location.href = 'user.html';
             }, 2000);
@@ -494,5 +500,31 @@ function checkAuthStatus() {
         } else {
             window.location.href = 'user.html';
         }
+    }
+}
+
+// Function to resend verification email
+async function resendVerificationEmail(email) {
+    try {
+        const { error } = await supabase.auth.resend({
+            type: 'signup',
+            email: email,
+            options: {
+                emailRedirectTo: `${window.location.origin}/login.html`
+            }
+        });
+        
+        if (error) throw error;
+        
+        showMessage(document.getElementById('login-message'), 
+            'Verification email sent! Please check your inbox.', 
+            'success'
+        );
+    } catch (error) {
+        console.error('Error resending verification:', error);
+        showMessage(document.getElementById('login-message'), 
+            'Error sending verification email: ' + error.message, 
+            'error'
+        );
     }
 }
