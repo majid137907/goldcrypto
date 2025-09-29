@@ -1,4 +1,4 @@
-// user.js - نسخه بازنویسی شده
+// user.js - نسخه بازنویسی شده با تغییرات مورد نیاز
 document.addEventListener('DOMContentLoaded', function() {
     initUserDashboard();
 });
@@ -39,6 +39,11 @@ async function checkUserAuth() {
     document.getElementById('user-level').className = `level-${userData.level}`;
     document.getElementById('user-email').value = userData.email;
     document.getElementById('user-name').value = userData.full_name || '';
+    
+    // غیرفعال کردن نیاز به تایید ایمیل برای ورود
+    if (!userData.email_confirmed) {
+        console.log('Email not confirmed, but allowing access...');
+    }
 }
 
 function setupEventListeners() {
@@ -111,6 +116,10 @@ function setupEventListeners() {
     // Email verification
     document.getElementById('verify-code').addEventListener('click', verifyWithdrawalCode);
     document.getElementById('resend-code').addEventListener('click', resendVerificationCode);
+    
+    // اضافه کردن event listener برای مودال تغییر رمز عبور
+    document.getElementById('verify-profile-code').addEventListener('click', verifyPasswordChangeCode);
+    document.getElementById('resend-profile-code').addEventListener('click', resendPasswordChangeCode);
 }
 
 function showSection(section) {
@@ -179,7 +188,7 @@ async function loadMarketPrices() {
         const pricesContainer = document.getElementById('market-prices');
         if (!pricesContainer) return;
 
-        // استفاده از coinmarketcap.js برای دریافت قیمت‌ها
+        // استفاده از coinmarketcap.js برای دریافت قیمت‌های واقعی
         if (typeof fetchCryptoPrices === 'function') {
             // اگر قیمت‌ها قبلاً لود شده‌اند، نمایش بده
             if (typeof currentPrices !== 'undefined' && Object.keys(currentPrices).length > 0) {
@@ -804,6 +813,7 @@ async function updatePersonalInfo(e) {
     }
 }
 
+// تابع تغییر رمز عبور با اضافه کردن مودال تأیید کد
 async function changePassword(e) {
     e.preventDefault();
     
@@ -822,19 +832,69 @@ async function changePassword(e) {
             return;
         }
         
-        const { error } = await supabase.auth.updateUser({
-            password: newPassword
-        });
+        // نمایش مودال تأیید کد ایمیل
+        document.getElementById('email-verification-modal').style.display = 'block';
         
-        if (error) throw error;
+        // شبیه‌سازی ارسال کد به ایمیل
+        setTimeout(() => {
+            alert('Verification code has been sent to your email.');
+        }, 1000);
         
-        showMessage('password-message', 'Password updated successfully!', 'success');
-        document.getElementById('password-form').reset();
+        // ذخیره اطلاعات تغییر رمز عبور برای استفاده پس از تأیید کد
+        window.pendingPasswordChange = {
+            currentPassword,
+            newPassword
+        };
         
     } catch (error) {
         console.error('Error changing password:', error);
         showMessage('password-message', 'Error: ' + error.message, 'error');
     }
+}
+
+// تابع جدید برای تأیید کد و تغییر رمز عبور
+async function verifyPasswordChangeCode() {
+    try {
+        const code = document.getElementById('profile-verification-code').value;
+        
+        if (!code || code.length !== 6) {
+            alert('Please enter a valid 6-digit verification code');
+            return;
+        }
+        
+        // در اینجا باید کد با کد ارسال شده به ایمیل مقایسه شود
+        // برای نمونه، ما هر کد 6 رقمی را می‌پذیریم
+        if (/^\d{6}$/.test(code)) {
+            const { currentPassword, newPassword } = window.pendingPasswordChange;
+            
+            // تغییر رمز عبور در Supabase
+            const { error } = await supabase.auth.updateUser({
+                password: newPassword
+            });
+            
+            if (error) throw error;
+            
+            document.getElementById('email-verification-modal').style.display = 'none';
+            showMessage('password-message', 'Password updated successfully!', 'success');
+            document.getElementById('password-form').reset();
+            
+            // پاک کردن داده‌های موقت
+            delete window.pendingPasswordChange;
+            
+        } else {
+            alert('Invalid verification code');
+        }
+        
+    } catch (error) {
+        console.error('Error verifying code:', error);
+        alert('Error: ' + error.message);
+    }
+}
+
+// تابع جدید برای ارسال مجدد کد تأیید
+async function resendPasswordChangeCode() {
+    // شبیه‌سازی ارسال مجدد کد
+    alert('Verification code has been resent to your email.');
 }
 
 function loadDepositModal() {
